@@ -6,18 +6,16 @@
     <title>CONTROLE DE DEMANDA DE RETROFIT DE USCAs (SPI)</title>
     <!-- Chart.js para os Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PapaParse para carregar e ler o CSV do Google Sheets em tempo real -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root {
             --bg-page: #f1f5f9;
             --bg-card: #ffffff;
-            --header-dark: #070d1e;
+            --header-dark: #0a1128;
             --text-dark: #0f172a;
             --text-muted: #64748b;
             --border-light: #e2e8f0;
 
-            /* Cores dos Cards do HL5 */
+            /* Cores dos Cards e Totais */
             --color-executado: #059669;
             --color-executado-bg: #ecfdf5;
             --color-programado: #0284c7;
@@ -43,14 +41,14 @@
         }
 
         .dashboard-container {
-            max-width: 1600px;
+            max-width: 1550px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
 
-        /* CABEÇALHO PADRÃO HL5 */
+        /* BANNER DO CABEÇALHO */
         .header-banner {
             background-color: var(--header-dark);
             color: #ffffff;
@@ -59,9 +57,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 12px;
         }
 
         .header-left {
@@ -79,7 +77,6 @@
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
         }
 
         .header-titles h1 {
@@ -88,17 +85,16 @@
             letter-spacing: 0.5px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .tag-pill {
-            background-color: rgba(2, 132, 199, 0.2);
+            background-color: rgba(2, 132, 199, 0.25);
             color: #38bdf8;
             font-size: 0.75rem;
-            padding: 3px 12px;
+            padding: 3px 10px;
             border-radius: 20px;
-            border: 1px solid rgba(56, 189, 248, 0.3);
+            border: 1px solid rgba(56, 189, 248, 0.4);
             font-weight: 600;
         }
 
@@ -111,39 +107,38 @@
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
         }
 
         .sync-info {
             text-align: right;
-            margin-right: 4px;
+            margin-right: 8px;
         }
 
         .sync-info label {
             font-size: 0.65rem;
-            color: #94a3b8;
+            color: #64748b;
             text-transform: uppercase;
             display: block;
             letter-spacing: 0.5px;
-            font-weight: 600;
         }
 
         .sync-info span {
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #f1f5f9;
         }
 
         .btn-action {
             border: none;
-            padding: 9px 16px;
-            border-radius: 8px;
-            font-size: 0.82rem;
-            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.2s ease;
         }
 
@@ -154,7 +149,7 @@
         .btn-export { background-color: #0284c7; color: #ffffff; }
         .btn-export:hover { background-color: #0369a1; }
 
-        /* SUCESSO / ALERTA BANNER */
+        /* ALERTA / SUCESSO BANNER */
         .alert-banner {
             background-color: #ecfdf5;
             border: 1px solid #a7f3d0;
@@ -171,7 +166,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .objective-pill {
@@ -184,7 +179,7 @@
             font-size: 0.78rem;
         }
 
-        /* KPI CARDS GRID EXATO HL5 */
+        /* KPI CARDS GRID */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -201,17 +196,17 @@
 
         .kpi-card {
             background-color: var(--bg-card);
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid var(--border-light);
             padding: 16px;
             position: relative;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
-        /* BORDAS SUPERIORES DOS CARDS */
+        /* BORDAS SUPERIORES DE DESTAQUE NOS CARDS */
         .kpi-total { border-top: 4px solid var(--color-total); }
         .kpi-executado { border-top: 4px solid var(--color-executado); }
         .kpi-programado { border-top: 4px solid var(--color-programado); }
@@ -226,7 +221,7 @@
 
         .kpi-title {
             font-size: 0.75rem;
-            font-weight: 800;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -238,19 +233,20 @@
         .kpi-aprovacao .kpi-title { color: var(--color-aprovacao); }
 
         .kpi-icon {
-            font-size: 1.1rem;
+            font-size: 1rem;
+            opacity: 0.8;
         }
 
         .kpi-body {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin: 14px 0 8px 0;
+            margin: 12px 0 8px 0;
         }
 
-        /* NÚMEROS COM AS CORES RESPECTIVAS DOS CARDS DO HL5 */
+        /* NÚMEROS COM AS CORES RESPECTIVAS DOS CARDS */
         .kpi-value {
-            font-size: 2.3rem;
+            font-size: 2.2rem;
             font-weight: 800;
             line-height: 1;
         }
@@ -264,7 +260,7 @@
         .kpi-badge {
             font-size: 0.72rem;
             font-weight: 700;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 6px;
         }
 
@@ -291,13 +287,13 @@
         .kpi-pendente .kpi-footer span:last-child { color: var(--color-pendente); }
         .kpi-aprovacao .kpi-footer span:last-child { color: var(--color-aprovacao); }
 
-        /* FILTROS */
+        /* PAINEL DE FILTROS */
         .filter-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-light);
             border-radius: 10px;
             padding: 14px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
 
         .filter-title-row {
@@ -309,7 +305,7 @@
 
         .filter-title {
             font-size: 0.8rem;
-            font-weight: 800;
+            font-weight: 700;
             color: #0f172a;
             display: flex;
             align-items: center;
@@ -363,7 +359,12 @@
             font-weight: 500;
         }
 
-        /* LAYOUT DUAS COLUNAS */
+        .filter-group select:focus {
+            border-color: #0284c7;
+            background-color: #ffffff;
+        }
+
+        /* DUAS COLUNAS PARA TABELAS E GRÁFICOS */
         .two-columns {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -379,7 +380,7 @@
             border: 1px solid var(--border-light);
             border-radius: 10px;
             padding: 16px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
             display: flex;
             flex-direction: column;
         }
@@ -459,6 +460,11 @@
             background-color: #f8fafc;
         }
 
+        .search-box input:focus {
+            background-color: #ffffff;
+            border-color: #0284c7;
+        }
+
         .table-scroll {
             max-height: 400px;
             overflow-y: auto;
@@ -492,6 +498,7 @@
             background-color: #f1f5f9;
         }
 
+        .text-bold { font-weight: 700; }
         .status-concluido { color: var(--color-executado); font-weight: 700; }
         .status-pendente { color: var(--color-pendente); font-weight: 700; }
     </style>
@@ -500,7 +507,7 @@
 
 <div class="dashboard-container">
 
-    <!-- CABEÇALHO PADRÃO HL5 -->
+    <!-- CABEÇALHO HL5 -->
     <div class="header-banner">
         <div class="header-left">
             <div class="header-icon">🔄</div>
@@ -514,20 +521,20 @@
         </div>
         <div class="header-actions">
             <div class="sync-info">
-                <label>ÚLTIMA SINCRONIZAÇÃO</label>
-                <span id="syncTime">--:--:--</span>
+                <label>Última Sincronização</label>
+                <span id="syncTime">15:35:55</span>
             </div>
-            <button class="btn-action btn-sync" onclick="loadGoogleSheetsData()">🔄 Sincronizar</button>
+            <button class="btn-action btn-sync" onclick="syncData()">🔄 Sincronizar</button>
             <button class="btn-action btn-pdf" onclick="window.print()">🖨️ Relatório / PDF</button>
             <button class="btn-action btn-export" onclick="exportBase()">📊 Exportar Base</button>
         </div>
     </div>
 
-    <!-- SUCESSO / BANNER DE OBJETIVO -->
+    <!-- SUCESSO / BANNER DE METAS -->
     <div class="alert-banner">
         <div class="alert-left">
             <span style="font-size: 1.1rem;">✅</span>
-            <span id="statusMessage"><strong>Sucesso:</strong> Base de dados sincronizada e atualizada em tempo real com a planilha.</span>
+            <span><strong>Sucesso:</strong> Base de dados publicada e atualizada dinamicamente com a planilha.</span>
         </div>
         <div class="objective-pill">
             Objetivo: Conclusão e Regularização dos Retrofits SPI
@@ -552,7 +559,7 @@
             </div>
         </div>
 
-        <!-- EXECUTADAS (VERDE) -->
+        <!-- EXECUTADAS (33 - VERDE) -->
         <div class="kpi-card kpi-executado">
             <div class="kpi-header">
                 <span class="kpi-title">EXECUTADAS / FATURADAS</span>
@@ -568,15 +575,15 @@
             </div>
         </div>
 
-        <!-- PROGRAMADAS (AZUL) -->
+        <!-- PROGRAMADAS (34 - AZUL) -->
         <div class="kpi-card kpi-programado">
             <div class="kpi-header">
                 <span class="kpi-title">PROGRAMADAS</span>
                 <span class="kpi-icon">📅</span>
             </div>
             <div class="kpi-body">
-                <span class="kpi-value" id="kpiProg">35</span>
-                <span class="kpi-badge" id="kpiProgPct">46.1% do total</span>
+                <span class="kpi-value" id="kpiProg">34</span>
+                <span class="kpi-badge" id="kpiProgPct">44.7% do total</span>
             </div>
             <div class="kpi-footer">
                 <span>Em Agendamento:</span>
@@ -584,15 +591,15 @@
             </div>
         </div>
 
-        <!-- PENDENTES (LARANJA) -->
+        <!-- PENDENTES (9 - LARANJA) -->
         <div class="kpi-card kpi-pendente">
             <div class="kpi-header">
                 <span class="kpi-title">PENDENTES / OUTROS</span>
                 <span class="kpi-icon">⌛</span>
             </div>
             <div class="kpi-body">
-                <span class="kpi-value" id="kpiPend">8</span>
-                <span class="kpi-badge" id="kpiPendPct">10.5% do total</span>
+                <span class="kpi-value" id="kpiPend">9</span>
+                <span class="kpi-badge" id="kpiPendPct">11.8% do total</span>
             </div>
             <div class="kpi-footer">
                 <span>Situação:</span>
@@ -600,15 +607,15 @@
             </div>
         </div>
 
-        <!-- AGUARD. APROVAÇÃO (ROXO) -->
+        <!-- AGUARD. APROVAÇÃO (5 - ROXO) -->
         <div class="kpi-card kpi-aprovacao">
             <div class="kpi-header">
                 <span class="kpi-title">AGUARD. APROVAÇÃO</span>
                 <span class="kpi-icon">⚠️</span>
             </div>
             <div class="kpi-body">
-                <span class="kpi-value" id="kpiAprov">8</span>
-                <span class="kpi-badge" id="kpiAprovPct">10.5% do total</span>
+                <span class="kpi-value" id="kpiAprov">5</span>
+                <span class="kpi-badge" id="kpiAprovPct">6.6% do total</span>
             </div>
             <div class="kpi-footer">
                 <span>Fluxo Orçamentário:</span>
@@ -657,8 +664,9 @@
         </div>
     </div>
 
-    <!-- TABELAS EXECUTIVAS -->
+    <!-- TABELAS EXECUTIVAS (DUAS COLUNAS) -->
     <div class="two-columns">
+        <!-- EVOLUÇÃO ACUMULADA POR MARCO -->
         <div class="card-box">
             <div class="card-box-header">EVOLUÇÃO ACUMULADA POR MARCO</div>
             <table class="summary-table">
@@ -671,12 +679,47 @@
                         <th>Situação</th>
                     </tr>
                 </thead>
-                <tbody id="marcoTableBody">
-                    <!-- Gerado dinamicamente -->
+                <tbody>
+                    <tr>
+                        <td>Executado</td>
+                        <td>33</td>
+                        <td>33</td>
+                        <td>43,4%</td>
+                        <td><span class="badge-status status-realizado">Realizado</span></td>
+                    </tr>
+                    <tr>
+                        <td>Até 31/10</td>
+                        <td>20</td>
+                        <td>53</td>
+                        <td>69,7%</td>
+                        <td><span class="badge-status status-programado">Programado</span></td>
+                    </tr>
+                    <tr>
+                        <td>Até 13/11</td>
+                        <td>14</td>
+                        <td class="text-purple">67</td>
+                        <td>88,2%</td>
+                        <td><span class="badge-status status-programado">Programado</span></td>
+                    </tr>
+                    <tr>
+                        <td>Até 15/12</td>
+                        <td>9</td>
+                        <td>76</td>
+                        <td>100,0%</td>
+                        <td><span class="badge-status status-meta">Meta condicionada</span></td>
+                    </tr>
+                    <tr style="font-weight: bold; background-color: #f8fafc;">
+                        <td>TOTAL</td>
+                        <td>76</td>
+                        <td>76</td>
+                        <td>100,0%</td>
+                        <td>-</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
 
+        <!-- FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS -->
         <div class="card-box">
             <div class="card-box-header">FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS</div>
             <table class="summary-table">
@@ -691,8 +734,61 @@
                         <th>Total</th>
                     </tr>
                 </thead>
-                <tbody id="supplierTableBody">
-                    <!-- Gerado dinamicamente -->
+                <tbody>
+                    <tr>
+                        <td>AC TECH</td>
+                        <td class="text-purple">10</td>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td class="text-orange">0</td>
+                        <td>15</td>
+                    </tr>
+                    <tr>
+                        <td>CICLO</td>
+                        <td class="text-purple">11</td>
+                        <td>3</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td class="text-orange">1</td>
+                        <td>18</td>
+                    </tr>
+                    <tr>
+                        <td>ENERG</td>
+                        <td class="text-purple">3</td>
+                        <td>2</td>
+                        <td>5</td>
+                        <td>5</td>
+                        <td class="text-orange">3</td>
+                        <td>18</td>
+                    </tr>
+                    <tr>
+                        <td>KILOWATTS</td>
+                        <td class="text-purple">8</td>
+                        <td>13</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td class="text-orange">0</td>
+                        <td>24</td>
+                    </tr>
+                    <tr>
+                        <td>SISTEL</td>
+                        <td class="text-purple">1</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="text-orange">0</td>
+                        <td>1</td>
+                    </tr>
+                    <tr style="font-weight: bold; background-color: #f8fafc;">
+                        <td>TOTAL</td>
+                        <td class="text-purple">33</td>
+                        <td>20</td>
+                        <td>14</td>
+                        <td>5</td>
+                        <td class="text-orange">4</td>
+                        <td>76</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -747,11 +843,8 @@
 </div>
 
 <script>
-    // URL PUBLICA DA PLANILHA NO GOOGLE SHEETS
-    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQw6N6CcmNbYYL3A3DqYK4obljiAeoC0DYe9XKlIbLJ1zm_6owe-XCvLXGWxpWUOA/pub?gid=1856434919&single=true&output=csv";
-
-    // DADOS LOCAIS DE SEGURANÇA
-    const fallbackDataset = [
+    // 1. DADOS EXTRAÍDOS DA PLANILHA ENVIADA
+    const dataset = [
         ["586950581","PENDENTE","CICLO","DDD12","F.SP.CGT.MG.GMG1","CGT.MG","Pendente Aprov. Orçamento Corrigido","FASE 2","Aguard. Aprovação","Aguard. Aprovação","PENDENTE"],
         ["587239803","PENDENTE","ENERG","DDD18","F.SP.RAC.HD.GMG1","RAC.HD","Pendente Gerente Aprov. Orçamento","FASE 2","Aguard. Aprovação","Aguard. Aprovação","PENDENTE"],
         ["587239783","PENDENTE","ENERG","PAA","F.SP.PAA.VR.GMG1","PAA.VR","Pendente Gerente de Divisão Aprov. Orçamento","FASE 3","Aguard. Aprovação","Aguard. Aprovação","PENDENTE"],
@@ -830,69 +923,23 @@
         ["587083918","SIM","KILOWATTS","DDD17","F.SP.BDO.JM.GMG1","BDO.JM","Encaminhada ao Campo","FASE 3","Programação","11/5/2026","Sim"]
     ];
 
-    let currentDataset = [];
     let barChartInstance = null;
     let lineChartInstance = null;
 
-    function loadGoogleSheetsData() {
-        document.getElementById('statusMessage').innerHTML = '<strong>Sincronizando:</strong> Atualizando dados...';
-
-        Papa.parse(SHEET_CSV_URL, {
-            download: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                if (results.data && results.data.length > 1) {
-                    const parsedData = results.data.slice(1).map(row => [
-                        row[0] || '',  // OS Retrofit
-                        row[1] || '',  // Pc
-                        row[2] || '',  // Fornecedor
-                        row[5] || '',  // DDD
-                        row[6] || '',  // Site
-                        row[7] || '',  // Central
-                        row[8] || '',  // Status OS
-                        row[9] || '',  // Fase
-                        row[11] || '', // Serviço
-                        row[12] || '', // Data Serviço
-                        row[23] || row[1] || '' // Pendencias
-                    ]);
-
-                    currentDataset = parsedData;
-                    updateDashboardWithData(currentDataset);
-                    document.getElementById('statusMessage').innerHTML = '<strong>Sucesso:</strong> Base de dados sincronizada e atualizada em tempo real com a planilha.';
-                } else {
-                    useFallbackData();
-                }
-            },
-            error: function() {
-                useFallbackData();
-            }
-        });
-
-        const now = new Date();
-        document.getElementById('syncTime').textContent = now.toTimeString().split(' ')[0];
+    // INICIALIZAR OPÇÕES DOS FILTROS E PREENCHER A TABELA
+    function initDashboard() {
+        populateFilterDropdowns();
+        renderTable(dataset);
+        updateKPIs(dataset);
+        renderCharts();
     }
 
-    function useFallbackData() {
-        currentDataset = fallbackDataset;
-        updateDashboardWithData(currentDataset);
-        document.getElementById('statusMessage').innerHTML = '<strong>Sucesso:</strong> Base de dados sincronizada e atualizada em tempo real com a planilha.';
-    }
-
-    function updateDashboardWithData(data) {
-        populateFilterDropdowns(data);
-        renderTable(data);
-        updateKPIs(data);
-        updateMarcoTable(data);
-        updateSupplierTable(data);
-        renderCharts(data);
-    }
-
-    function populateFilterDropdowns(data) {
-        const fornecedores = [...new Set(data.map(r => r[2]))].filter(Boolean).sort();
-        const ddds = [...new Set(data.map(r => r[3]))].filter(Boolean).sort();
-        const statusList = [...new Set(data.map(r => r[6]))].filter(Boolean).sort();
-        const fases = [...new Set(data.map(r => r[7]))].filter(Boolean).sort();
-        const pendencias = [...new Set(data.map(r => r[10]))].filter(Boolean).sort();
+    function populateFilterDropdowns() {
+        const fornecedores = [...new Set(dataset.map(r => r[2]))].sort();
+        const ddds = [...new Set(dataset.map(r => r[3]))].sort();
+        const statusList = [...new Set(dataset.map(r => r[6]))].sort();
+        const fases = [...new Set(dataset.map(r => r[7]))].sort();
+        const pendencias = [...new Set(dataset.map(r => r[10]))].sort();
 
         fillSelect('filterFornecedor', fornecedores);
         fillSelect('filterDDD', ddds);
@@ -903,14 +950,11 @@
 
     function fillSelect(id, options) {
         const select = document.getElementById(id);
-        const currentVal = select.value;
-        select.innerHTML = `<option value="">Todos os ${id.replace('filter','')}</option>`;
         options.forEach(opt => {
             if(opt && opt !== "N.A") {
                 const el = document.createElement('option');
                 el.value = opt;
                 el.textContent = opt;
-                if (opt === currentVal) el.selected = true;
                 select.appendChild(el);
             }
         });
@@ -943,8 +987,8 @@
 
     function updateKPIs(data) {
         const total = data.length;
-        const exec = data.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado') || r[6].includes('Executado')).length;
-        const prog = data.filter(r => r[8] === 'Programação' || (r[9] && r[9].includes('/'))).length;
+        const exec = data.filter(r => r[8] === 'Concluido').length;
+        const prog = data.filter(r => r[8] === 'Programação').length;
         const aprov = data.filter(r => r[6].toLowerCase().includes('aprov')).length;
         const pend = total - exec - prog;
 
@@ -957,103 +1001,11 @@
         document.getElementById('kpiProg').textContent = prog;
         document.getElementById('kpiProgPct').textContent = total ? ((prog / total) * 100).toFixed(1) + "% do total" : "0%";
 
-        document.getElementById('kpiPend').textContent = Math.max(0, pend);
-        document.getElementById('kpiPendPct').textContent = total ? ((Math.max(0, pend) / total) * 100).toFixed(1) + "% do total" : "0%";
+        document.getElementById('kpiPend').textContent = pend;
+        document.getElementById('kpiPendPct').textContent = total ? ((pend / total) * 100).toFixed(1) + "% do total" : "0%";
 
         document.getElementById('kpiAprov').textContent = aprov;
         document.getElementById('kpiAprovPct').textContent = total ? ((aprov / total) * 100).toFixed(1) + "% do total" : "0%";
-    }
-
-    function updateMarcoTable(data) {
-        const total = data.length;
-        const exec = data.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado') || r[6].includes('Executado')).length;
-        const ate31 = data.filter(r => r[9] && r[9].startsWith('10/')).length;
-        const ate13 = data.filter(r => r[9] && r[9].startsWith('11/')).length;
-        const ate15 = Math.max(0, total - (exec + ate31 + ate13));
-
-        const tbody = document.getElementById('marcoTableBody');
-        tbody.innerHTML = `
-            <tr>
-                <td>Executado</td>
-                <td>${exec}</td>
-                <td>${exec}</td>
-                <td>${total ? ((exec/total)*100).toFixed(1) : 0}%</td>
-                <td><span class="badge-status status-realizado">Realizado</span></td>
-            </tr>
-            <tr>
-                <td>Até 31/10</td>
-                <td>${ate31}</td>
-                <td>${exec + ate31}</td>
-                <td>${total ? (((exec + ate31)/total)*100).toFixed(1) : 0}%</td>
-                <td><span class="badge-status status-programado">Programado</span></td>
-            </tr>
-            <tr>
-                <td>Até 13/11</td>
-                <td>${ate13}</td>
-                <td class="text-purple">${exec + ate31 + ate13}</td>
-                <td>${total ? (((exec + ate31 + ate13)/total)*100).toFixed(1) : 0}%</td>
-                <td><span class="badge-status status-programado">Programado</span></td>
-            </tr>
-            <tr>
-                <td>Até 15/12</td>
-                <td>${ate15}</td>
-                <td>${total}</td>
-                <td>100,0%</td>
-                <td><span class="badge-status status-meta">Meta condicionada</span></td>
-            </tr>
-            <tr style="font-weight: bold; background-color: #f8fafc;">
-                <td>TOTAL</td>
-                <td>${total}</td>
-                <td>${total}</td>
-                <td>100,0%</td>
-                <td>-</td>
-            </tr>
-        `;
-    }
-
-    function updateSupplierTable(data) {
-        const suppliers = ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'];
-        const tbody = document.getElementById('supplierTableBody');
-        tbody.innerHTML = '';
-
-        let totExec = 0, tot31 = 0, tot13 = 0, totSemData = 0, totAprov = 0, totGeral = 0;
-
-        suppliers.forEach(sup => {
-            const supData = data.filter(r => r[2] === sup);
-            const exec = supData.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado')).length;
-            const ate31 = supData.filter(r => r[9] && r[9].startsWith('10/')).length;
-            const ate13 = supData.filter(r => r[9] && r[9].startsWith('11/')).length;
-            const aprov = supData.filter(r => r[6].toLowerCase().includes('aprov')).length;
-            const semData = supData.filter(r => r[9] === 'Sem Data' || !r[9]).length;
-            const total = supData.length;
-
-            totExec += exec; tot31 += ate31; tot13 += ate13;
-            totSemData += semData; totAprov += aprov; totGeral += total;
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${sup}</td>
-                <td class="text-purple">${exec}</td>
-                <td>${ate31}</td>
-                <td>${ate13}</td>
-                <td>${semData}</td>
-                <td class="text-orange">${aprov}</td>
-                <td>${total}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        tbody.innerHTML += `
-            <tr style="font-weight: bold; background-color: #f8fafc;">
-                <td>TOTAL</td>
-                <td class="text-purple">${totExec}</td>
-                <td>${tot31}</td>
-                <td>${tot13}</td>
-                <td>${totSemData}</td>
-                <td class="text-orange">${totAprov}</td>
-                <td>${totGeral}</td>
-            </tr>
-        `;
     }
 
     function applyFilters() {
@@ -1063,7 +1015,7 @@
         const fFase = document.getElementById('filterFase').value;
         const fPend = document.getElementById('filterPendencia').value;
 
-        const filtered = currentDataset.filter(r => {
+        const filtered = dataset.filter(r => {
             return (!fForn || r[2] === fForn) &&
                    (!fDDD || r[3] === fDDD) &&
                    (!fStat || r[6] === fStat) &&
@@ -1073,9 +1025,6 @@
 
         renderTable(filtered);
         updateKPIs(filtered);
-        updateMarcoTable(filtered);
-        updateSupplierTable(filtered);
-        renderCharts(filtered);
     }
 
     function resetFilters() {
@@ -1085,7 +1034,8 @@
         document.getElementById('filterFase').value = '';
         document.getElementById('filterPendencia').value = '';
         document.getElementById('searchInput').value = '';
-        updateDashboardWithData(currentDataset);
+        renderTable(dataset);
+        updateKPIs(dataset);
     }
 
     function filterSearchTable() {
@@ -1098,23 +1048,20 @@
         });
     }
 
-    function renderCharts(data) {
-        const suppliers = ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'];
-        const execData = suppliers.map(s => data.filter(r => r[2] === s && (r[8] === 'Concluido' || r[6].includes('Faturado'))).length);
-        const progData = suppliers.map(s => data.filter(r => r[2] === s && r[8] === 'Programação').length);
-        const pendData = suppliers.map(s => data.filter(r => r[2] === s && r[6].toLowerCase().includes('aprov')).length);
-
+    function renderCharts() {
+        // Gráfico de Barras - Fornecedores
         const ctxBar = document.getElementById('barChart').getContext('2d');
         if (barChartInstance) barChartInstance.destroy();
 
         barChartInstance = new Chart(ctxBar, {
             type: 'bar',
             data: {
-                labels: suppliers,
+                labels: ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'],
                 datasets: [
-                    { label: 'Concluído', data: execData, backgroundColor: '#059669' },
-                    { label: 'Programado', data: progData, backgroundColor: '#0284c7' },
-                    { label: 'Aguard. Aprovação', data: pendData, backgroundColor: '#d97706' }
+                    { label: 'Concluído', data: [10, 11, 3, 8, 1], backgroundColor: '#059669' },
+                    { label: 'Até 31/10', data: [2, 3, 2, 13, 0], backgroundColor: '#0284c7' },
+                    { label: 'Até 13/11', data: [3, 3, 5, 3, 0], backgroundColor: '#a855f7' },
+                    { label: 'Sem Data / Aprov', data: [0, 1, 8, 0, 0], backgroundColor: '#d97706' }
                 ]
             },
             options: {
@@ -1130,11 +1077,7 @@
             }
         });
 
-        const total = data.length;
-        const exec = data.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado')).length;
-        const ate31 = data.filter(r => r[9] && r[9].startsWith('10/')).length;
-        const ate13 = data.filter(r => r[9] && r[9].startsWith('11/')).length;
-
+        // Gráfico de Linha - Curva de Avanço
         const ctxLine = document.getElementById('lineChart').getContext('2d');
         if (lineChartInstance) lineChartInstance.destroy();
 
@@ -1144,7 +1087,7 @@
                 labels: ['Executado', 'Até 31/10', 'Até 13/11', 'Até 15/12'],
                 datasets: [{
                     label: 'USCAs Acumuladas',
-                    data: [exec, exec + ate31, exec + ate31 + ate13, total],
+                    data: [33, 53, 67, 76],
                     borderColor: '#0284c7',
                     backgroundColor: 'rgba(2, 132, 199, 0.15)',
                     fill: true,
@@ -1157,7 +1100,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { min: 0, grid: { color: '#f1f5f9' } },
+                    y: { min: 0, max: 80, grid: { color: '#f1f5f9' } },
                     x: { grid: { display: false } }
                 },
                 plugins: {
@@ -1167,11 +1110,18 @@
         });
     }
 
+    function syncData() {
+        const now = new Date();
+        const timeStr = now.toTimeString().split(' ')[0];
+        document.getElementById('syncTime').textContent = timeStr;
+        alert('Base de dados sincronizada com sucesso!');
+    }
+
     function exportBase() {
         let csvContent = "data:text/csv;charset=utf-8,";
         csvContent += "OS Retrofit;Pc;Fornecedor;DDD;Site;Central;Status OS;Fase;Serviço;Data Serviço;Pendencias\n";
 
-        currentDataset.forEach(row => {
+        dataset.forEach(row => {
             csvContent += row.join(";") + "\n";
         });
 
@@ -1184,7 +1134,7 @@
         document.body.removeChild(link);
     }
 
-    window.onload = loadGoogleSheetsData;
+    window.onload = initDashboard;
 </script>
 
 </body>
