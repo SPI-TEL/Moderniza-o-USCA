@@ -4,827 +4,1100 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CONTROLE DE DEMANDA DE RETROFIT DE USCAs (SPI)</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
+    <!-- Chart.js para os Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: {
-                            800: '#0f172a',
-                            900: '#0b1727',
-                            950: '#080f1a'
-                        },
-                        brand: {
-                            blue: '#0284c7',
-                            cyan: '#06b6d4',
-                            green: '#10b981',
-                            orange: '#f97316',
-                            amber: '#f59e0b',
-                            purple: '#a855f7'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- PapaParse para carregar e ler o CSV do Google Sheets em tempo real -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
+        :root {
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --header-dark: #070d1e;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-light: #e2e8f0;
+
+            /* Cores dos Cards do HL5 */
+            --color-executado: #059669;
+            --color-executado-bg: #ecfdf5;
+            --color-programado: #0284c7;
+            --color-programado-bg: #f0f9ff;
+            --color-pendente: #d97706;
+            --color-pendente-bg: #fffbeb;
+            --color-aprovacao: #9333ea;
+            --color-aprovacao-bg: #faf5ff;
+            --color-total: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-dark);
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* CABEÇALHO PADRÃO HL5 */
+        .header-banner {
+            background-color: var(--header-dark);
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            background-color: #0284c7;
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+        }
+
+        .header-titles h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tag-pill {
+            background-color: rgba(2, 132, 199, 0.2);
+            color: #38bdf8;
+            font-size: 0.75rem;
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            font-weight: 600;
+        }
+
+        .header-titles p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .sync-info {
+            text-align: right;
+            margin-right: 4px;
+        }
+
+        .sync-info label {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            display: block;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .sync-info span {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sync { background-color: #059669; color: #ffffff; }
+        .btn-sync:hover { background-color: #047857; }
+        .btn-pdf { background-color: #1e293b; color: #f1f5f9; border: 1px solid #334155; }
+        .btn-pdf:hover { background-color: #334155; }
+        .btn-export { background-color: #0284c7; color: #ffffff; }
+        .btn-export:hover { background-color: #0369a1; }
+
+        /* SUCESSO / ALERTA BANNER */
+        .alert-banner {
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            padding: 10px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #065f46;
+        }
+
+        .alert-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .objective-pill {
+            background-color: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+
+        /* KPI CARDS GRID EXATO HL5 */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 1200px) {
+            .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+        }
+
+        .kpi-card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            padding: 16px;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* BORDAS SUPERIORES DOS CARDS */
+        .kpi-total { border-top: 4px solid var(--color-total); }
+        .kpi-executado { border-top: 4px solid var(--color-executado); }
+        .kpi-programado { border-top: 4px solid var(--color-programado); }
+        .kpi-pendente { border-top: 4px solid var(--color-pendente); }
+        .kpi-aprovacao { border-top: 4px solid var(--color-aprovacao); }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kpi-title {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-total .kpi-title { color: #475569; }
+        .kpi-executado .kpi-title { color: var(--color-executado); }
+        .kpi-programado .kpi-title { color: var(--color-programado); }
+        .kpi-pendente .kpi-title { color: var(--color-pendente); }
+        .kpi-aprovacao .kpi-title { color: var(--color-aprovacao); }
+
+        .kpi-icon {
+            font-size: 1.1rem;
+        }
+
+        .kpi-body {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin: 14px 0 8px 0;
+        }
+
+        /* NÚMEROS COM AS CORES RESPECTIVAS DOS CARDS */
+        .kpi-value {
+            font-size: 2.3rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .kpi-total .kpi-value { color: var(--color-total); }
+        .kpi-executado .kpi-value { color: var(--color-executado) !important; }
+        .kpi-programado .kpi-value { color: var(--color-programado) !important; }
+        .kpi-pendente .kpi-value { color: var(--color-pendente) !important; }
+        .kpi-aprovacao .kpi-value { color: var(--color-aprovacao) !important; }
+
+        .kpi-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .kpi-total .kpi-badge { background-color: #f1f5f9; color: #475569; }
+        .kpi-executado .kpi-badge { background-color: var(--color-executado-bg); color: var(--color-executado); }
+        .kpi-programado .kpi-badge { background-color: var(--color-programado-bg); color: var(--color-programado); }
+        .kpi-pendente .kpi-badge { background-color: var(--color-pendente-bg); color: var(--color-pendente); }
+        .kpi-aprovacao .kpi-badge { background-color: var(--color-aprovacao-bg); color: var(--color-aprovacao); }
+
+        .kpi-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 8px;
+            margin-top: 4px;
+        }
+
+        .kpi-footer span:first-child { color: var(--text-muted); }
+        .kpi-footer span:last-child { font-weight: 700; }
+
+        .kpi-executado .kpi-footer span:last-child { color: var(--color-executado); }
+        .kpi-programado .kpi-footer span:last-child { color: var(--color-programado); }
+        .kpi-pendente .kpi-footer span:last-child { color: var(--color-pendente); }
+        .kpi-aprovacao .kpi-footer span:last-child { color: var(--color-aprovacao); }
+
+        /* FILTROS */
+        .filter-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 14px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .filter-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .filter-title {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+        }
+
+        .btn-clear-filters {
+            background-color: transparent;
+            border: 1px solid var(--border-light);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-clear-filters:hover {
+            background-color: #f8fafc;
+            color: var(--text-dark);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .filter-group select {
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            font-size: 0.8rem;
+            outline: none;
+            font-weight: 500;
+        }
+
+        /* LAYOUT DUAS COLUNAS */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 1024px) {
+            .two-columns { grid-template-columns: 1fr; }
+        }
+
+        .card-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-box-header {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-light);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* TABELAS RESUMIDAS */
+        table.summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        table.summary-table th, table.summary-table td {
+            padding: 8px 10px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+        }
+
+        table.summary-table th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        table.summary-table td:first-child, table.summary-table th:first-child {
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .badge-status {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .status-realizado { background-color: var(--color-executado-bg); color: var(--color-executado); }
+        .status-programado { background-color: var(--color-programado-bg); color: var(--color-programado); }
+        .status-meta { background-color: var(--color-pendente-bg); color: var(--color-pendente); }
+
+        .text-purple { color: var(--color-aprovacao); font-weight: bold; }
+        .text-orange { color: var(--color-pendente); font-weight: bold; }
+
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+
+        /* TABELA BASE DETALHADA */
+        .search-box {
+            margin-bottom: 12px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 9px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            font-size: 0.82rem;
+            outline: none;
+            background-color: #f8fafc;
+        }
+
+        .table-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+        }
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+
+        table.data-table th, table.data-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        table.data-table th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        table.data-table tr:hover {
             background-color: #f1f5f9;
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        @media print {
-            .no-print { display: none !important; }
-            body { background-color: white; padding: 0; }
-        }
+
+        .status-concluido { color: var(--color-executado); font-weight: 700; }
+        .status-pendente { color: var(--color-pendente); font-weight: 700; }
     </style>
 </head>
-<body class="text-slate-800 antialiased p-3 sm:p-5">
+<body>
 
-    <div class="max-w-[1600px] mx-auto space-y-4">
+<div class="dashboard-container">
 
-        <!-- HEADER BANNER (HL5 STANDARD) -->
-        <header class="bg-navy-900 text-white rounded-xl p-4 sm:p-5 shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border border-slate-800">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 text-2xl shrink-0 shadow-inner">
-                    <i class="fa-solid fa-rotate"></i>
-                </div>
-                <div>
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <h1 class="text-xl sm:text-2xl font-black tracking-wide text-white">CONTROLE DE DEMANDA DE RETROFIT DE USCAs (SPI)</h1>
-                        <span class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs px-2.5 py-0.5 rounded-full font-semibold">
-                            Google Sheets Live • Aba Analítica
-                        </span>
-                    </div>
-                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5 font-medium">
-                        Contrato Vivo • Acompanhamento Gerencial de Retrofit • Planta Interna & Rede de Acesso
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end border-t border-slate-700/60 lg:border-t-0 pt-3 lg:pt-0 no-print">
-                <div class="text-right mr-2 hidden sm:block">
-                    <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">ÚLTIMA SINCRONIZAÇÃO</span>
-                    <span id="syncTimestamp" class="text-sm font-extrabold text-white">15:42:58</span>
-                </div>
-                
-                <button onclick="triggerSync()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
-                    <i class="fa-solid fa-arrows-rotate" id="syncIcon"></i> Sincronizar
-                </button>
-                <button onclick="printReport()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
-                    <i class="fa-solid fa-print"></i> Relatório / PDF
-                </button>
-                <button onclick="exportCSV()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
-                    <i class="fa-solid fa-file-csv"></i> Exportar Base
-                </button>
-            </div>
-        </header>
-
-        <!-- NOTIFICATION / STATUS BANNER -->
-        <div class="bg-emerald-50/90 border border-emerald-200 text-emerald-900 rounded-lg p-3 px-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs sm:text-sm shadow-xs">
-            <div class="flex items-center gap-2 font-medium">
-                <div class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shrink-0 shadow-xs">
-                    <i class="fa-solid fa-check"></i>
-                </div>
-                <span><strong>Sucesso:</strong> Base de dados publicada e atualizada dinamicamente com a planilha em tempo real.</span>
-            </div>
-            <div class="bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 rounded-md text-xs font-bold shadow-2xs self-end sm:self-auto">
-                Objetivo: Conclusão e Regularização dos Retrofits SPI
+    <!-- CABEÇALHO PADRÃO HL5 -->
+    <div class="header-banner">
+        <div class="header-left">
+            <div class="header-icon">🔄</div>
+            <div class="header-titles">
+                <h1>
+                    CONTROLE DE DEMANDA DE RETROFIT DE USCAs (SPI)
+                    <span class="tag-pill">Google Sheets Live • Aba Analítica</span>
+                </h1>
+                <p>Contrato Vivo • Acompanhamento Gerencial de Retrofit • Planta Interna & Rede de Acesso</p>
             </div>
         </div>
-
-        <!-- KPI CARDS ROW (HL5 IDENTICAL COLOR SYSTEM & TOP ACCENT BORDERS) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-            
-            <!-- CARD 1: TOTAL DEMANDAS -->
-            <div class="bg-white rounded-xl p-4 border-t-4 border-t-slate-600 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">TOTAL DEMANDAS</span>
-                    <i class="fa-solid fa-circle-info text-slate-300 text-xs"></i>
-                </div>
-                <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiTotal" class="text-3xl font-black text-slate-900">76</span>
-                    <span class="bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        100% da Base
-                    </span>
-                </div>
-                <div class="text-xs font-semibold text-slate-500 pt-1.5 border-t border-slate-100 flex justify-between">
-                    <span>Base Mapeada:</span>
-                    <span class="font-bold text-slate-700">76 USCAs</span>
-                </div>
+        <div class="header-actions">
+            <div class="sync-info">
+                <label>ÚLTIMA SINCRONIZAÇÃO</label>
+                <span id="syncTime">--:--:--</span>
             </div>
-
-            <!-- CARD 2: EXECUTADAS / FATURADAS (GREEN) -->
-            <div class="bg-white rounded-xl p-4 border-t-4 border-t-emerald-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">EXECUTADAS / FATURADAS</span>
-                    <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
-                </div>
-                <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiExecutadas" class="text-3xl font-black text-slate-900">33</span>
-                    <span id="badgeExecutadas" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        43.4% do total
-                    </span>
-                </div>
-                <div class="text-xs font-semibold text-emerald-600 pt-1.5 border-t border-slate-100 flex justify-between">
-                    <span>Status:</span>
-                    <span class="font-bold">Concluído / Faturado</span>
-                </div>
-            </div>
-
-            <!-- CARD 3: PROGRAMADAS (CYAN / SKY BLUE) -->
-            <div class="bg-white rounded-xl p-4 border-t-4 border-t-sky-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold uppercase tracking-wider text-sky-600">PROGRAMADAS</span>
-                    <i class="fa-solid fa-calendar-check text-sky-500 text-sm"></i>
-                </div>
-                <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiProgramadas" class="text-3xl font-black text-slate-900">34</span>
-                    <span id="badgeProgramadas" class="bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        44.7% do total
-                    </span>
-                </div>
-                <div class="text-xs font-semibold text-sky-600 pt-1.5 border-t border-slate-100 flex justify-between">
-                    <span>Em Agendamento:</span>
-                    <span class="font-bold">Com Data Marcada</span>
-                </div>
-            </div>
-
-            <!-- CARD 4: PENDENTES / OUTROS (AMBER / ORANGE) -->
-            <div class="bg-white rounded-xl p-4 border-t-4 border-t-amber-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold uppercase tracking-wider text-amber-600">PENDENTES / OUTROS</span>
-                    <i class="fa-solid fa-hourglass-half text-amber-500 text-sm"></i>
-                </div>
-                <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiPendentes" class="text-3xl font-black text-slate-900">9</span>
-                    <span id="badgePendentes" class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        11.8% do total
-                    </span>
-                </div>
-                <div class="text-xs font-semibold text-amber-600 pt-1.5 border-t border-slate-100 flex justify-between">
-                    <span>Situação:</span>
-                    <span class="font-bold">Sem Data / Aprovação</span>
-                </div>
-            </div>
-
-            <!-- CARD 5: AGUARD. APROVAÇÃO (PURPLE) -->
-            <div class="bg-white rounded-xl p-4 border-t-4 border-t-purple-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold uppercase tracking-wider text-purple-600">AGUARD. APROVAÇÃO</span>
-                    <i class="fa-solid fa-triangle-exclamation text-purple-500 text-sm"></i>
-                </div>
-                <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiAprovação" class="text-3xl font-black text-slate-900">4</span>
-                    <span id="badgeAprovacao" class="bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        5.3% do total
-                    </span>
-                </div>
-                <div class="text-xs font-semibold text-purple-600 pt-1.5 border-t border-slate-100 flex justify-between">
-                    <span>Fluxo Orçamentário:</span>
-                    <span class="font-bold">Aprovação Pendente</span>
-                </div>
-            </div>
-
+            <button class="btn-action btn-sync" onclick="loadGoogleSheetsData()">🔄 Sincronizar</button>
+            <button class="btn-action btn-pdf" onclick="window.print()">🖨️ Relatório / PDF</button>
+            <button class="btn-action btn-export" onclick="exportBase()">📊 Exportar Base</button>
         </div>
-
-        <!-- FILTROS DE PESQUISA (HL5 STYLE) -->
-        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3 no-print">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-sky-700">
-                    <i class="fa-solid fa-filter"></i>
-                    <span>FILTROS DE PESQUISA</span>
-                </div>
-                <button onclick="clearFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-md transition flex items-center gap-1">
-                    <i class="fa-solid fa-filter-circle-xmark"></i> Limpar Filtros
-                </button>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs">
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Fornecedor</label>
-                    <select id="filterFornecedor" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todos os Fornecedores</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">DDD</label>
-                    <select id="filterDDD" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todos os DDDs</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Status OS</label>
-                    <select id="filterStatus" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todos os Status</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Fase</label>
-                    <select id="filterFase" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todas as Fases</option>
-                    </select>
-                </div>
-                <div class="col-span-2 sm:col-span-1">
-                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Pendência</label>
-                    <select id="filterPendencia" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todas</option>
-                        <option value="PENDENTE">Apenas PENDENTES</option>
-                        <option value="Sim">Apenas OK (Sim)</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- SUMMARY TABLES SECTION -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <!-- TABELA MARCOS -->
-            <div class="lg:col-span-5 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
-                <div>
-                    <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-3 flex items-center justify-between">
-                        <span>EVOLUÇÃO ACUMULADA POR MARCO</span>
-                        <i class="fa-solid fa-flag-checkered text-slate-400"></i>
-                    </h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-center border-collapse">
-                            <thead>
-                                <tr class="bg-navy-900 text-white font-bold">
-                                    <th class="p-2 text-left rounded-tl-md">Marco</th>
-                                    <th class="p-2">Novas</th>
-                                    <th class="p-2">Acum.</th>
-                                    <th class="p-2">Avanço %</th>
-                                    <th class="p-2 rounded-tr-md">Situação</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold text-slate-900">Executado</td>
-                                    <td class="p-2">33</td>
-                                    <td class="p-2 font-bold">33</td>
-                                    <td class="p-2 text-emerald-600 font-bold">43,4%</td>
-                                    <td class="p-2"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">Realizado</span></td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold text-slate-900">Até 31/10</td>
-                                    <td class="p-2">21</td>
-                                    <td class="p-2 font-bold">53</td>
-                                    <td class="p-2 text-sky-600 font-bold">69,7%</td>
-                                    <td class="p-2"><span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
-                                </tr>
-                                <tr class="hover:bg-purple-50/50 bg-purple-50/30">
-                                    <td class="p-2 text-left font-bold text-purple-950">Até 13/11</td>
-                                    <td class="p-2">14</td>
-                                    <td class="p-2 font-black text-purple-700">67</td>
-                                    <td class="p-2 text-purple-700 font-bold">88,2%</td>
-                                    <td class="p-2"><span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold text-slate-900">Até 15/12</td>
-                                    <td class="p-2">9</td>
-                                    <td class="p-2 font-bold">76</td>
-                                    <td class="p-2 text-amber-600 font-bold">100,0%</td>
-                                    <td class="p-2"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">Meta Cond.</span></td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr class="bg-slate-100 font-bold text-slate-900 border-t border-slate-200">
-                                    <td class="p-2 text-left">TOTAL</td>
-                                    <td class="p-2">76</td>
-                                    <td class="p-2">76</td>
-                                    <td class="p-2">100,0%</td>
-                                    <td class="p-2">-</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TABELA FORNECEDORES DETALHE -->
-            <div class="lg:col-span-7 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
-                <div>
-                    <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-3 flex items-center justify-between">
-                        <span>FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS</span>
-                        <i class="fa-solid fa-truck-field text-slate-400"></i>
-                    </h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-center border-collapse">
-                            <thead>
-                                <tr class="bg-navy-900 text-white font-bold">
-                                    <th class="p-2 text-left rounded-tl-md">Fornecedor</th>
-                                    <th class="p-2 bg-emerald-800 text-emerald-100">Concluído</th>
-                                    <th class="p-2">Até 31/10</th>
-                                    <th class="p-2">Até 13/11</th>
-                                    <th class="p-2">Sem Data</th>
-                                    <th class="p-2 bg-rose-900 text-rose-200">Aprov. Pendente</th>
-                                    <th class="p-2 rounded-tr-md">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">AC TECH</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">10</td>
-                                    <td class="p-2">2</td>
-                                    <td class="p-2">3</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2 font-bold text-slate-400">0</td>
-                                    <td class="p-2 font-bold">15</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">CICLO</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">11</td>
-                                    <td class="p-2">4</td>
-                                    <td class="p-2">3</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2 font-bold text-rose-600 bg-rose-50">1</td>
-                                    <td class="p-2 font-bold">18</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">ENERG</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">3</td>
-                                    <td class="p-2">2</td>
-                                    <td class="p-2">5</td>
-                                    <td class="p-2 font-bold text-amber-600">5</td>
-                                    <td class="p-2 font-bold text-rose-600 bg-rose-50">3</td>
-                                    <td class="p-2 font-bold">18</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">KILOWATTS</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">8</td>
-                                    <td class="p-2">13</td>
-                                    <td class="p-2">3</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2 font-bold text-slate-400">0</td>
-                                    <td class="p-2 font-bold">24</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">SISTEL</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">1</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2 font-bold text-slate-400">0</td>
-                                    <td class="p-2 font-bold">1</td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr class="bg-slate-100 font-bold text-slate-900 border-t border-slate-200">
-                                    <td class="p-2 text-left">TOTAL</td>
-                                    <td class="p-2 text-emerald-700">33</td>
-                                    <td class="p-2">21</td>
-                                    <td class="p-2">14</td>
-                                    <td class="p-2 text-amber-600">5</td>
-                                    <td class="p-2 text-rose-600">4</td>
-                                    <td class="p-2">76</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-xs flex items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-amber-600 text-sm shrink-0"></i>
-                    <span><strong>Atenção Gerencial:</strong> 5 USCAs sem data + 4 aguardando aprovação. A entrega até 15/12 depende de regularização.</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- CHARTS SECTION -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <!-- LEFT CHART -->
-            <div class="lg:col-span-7 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">EVOLUÇÃO ACUMULADA POR MARCO DE TEMPO</h3>
-                    <span class="text-[10px] bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded">Curva Executiva</span>
-                </div>
-                <div class="h-64 relative">
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
-
-            <!-- RIGHT CHART -->
-            <div class="lg:col-span-5 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">DISTRIBUIÇÃO DAS DEMANDAS POR FORNECEDOR</h3>
-                    <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded">Capacidade</span>
-                </div>
-                <div class="h-64 relative">
-                    <canvas id="supplierChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- DETAILED DATA TABLE -->
-        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
-                <div>
-                    <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-database text-sky-600"></i>
-                        <span>BASE DE DADOS DETALHADA DAS OSs</span>
-                    </h3>
-                    <p class="text-[11px] text-slate-500">Listagem das OSs de Retrofit, Sensores e Módulos</p>
-                </div>
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <div class="relative w-full sm:w-64">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Buscar OS, Site, Central, Status..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs font-medium focus:bg-white focus:border-sky-500 outline-none transition">
-                    </div>
-                    <span id="rowCount" class="bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0">
-                        76 registros
-                    </span>
-                </div>
-            </div>
-
-            <div class="overflow-x-auto custom-scrollbar max-h-[500px]">
-                <table id="dataTable" class="w-full text-xs text-left border-collapse">
-                    <thead class="sticky top-0 z-10 bg-navy-900 text-white font-bold">
-                        <tr>
-                            <th class="p-2.5 border-b border-slate-700">OS Retrofit</th>
-                            <th class="p-2.5 border-b border-slate-700">Pc</th>
-                            <th class="p-2.5 border-b border-slate-700">Fornecedor</th>
-                            <th class="p-2.5 border-b border-slate-700">DDD</th>
-                            <th class="p-2.5 border-b border-slate-700">Site</th>
-                            <th class="p-2.5 border-b border-slate-700">Central</th>
-                            <th class="p-2.5 border-b border-slate-700">Status OS</th>
-                            <th class="p-2.5 border-b border-slate-700">Fase</th>
-                            <th class="p-2.5 border-b border-slate-700">Serviço</th>
-                            <th class="p-2.5 border-b border-slate-700">Data Serviço</th>
-                            <th class="p-2.5 border-b border-slate-700">OS Módulo/Sensor</th>
-                            <th class="p-2.5 border-b border-slate-700 text-center">Pendência</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
-                        <!-- Loaded dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
     </div>
 
-    <!-- SCRIPT DE DADOS E LÓGICA DE NEGÓCIO -->
-    <script>
-        const dataset = [
-            { os: "586950581", pc: "PENDENTE", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.CGT.MG.GMG1", central: "CGT.MG", status: "Pendente Aprov. Orçamento Corrigido", fase: "FASE 2", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587080766", pendencias: "PENDENTE" },
-            { os: "587239803", pc: "PENDENTE", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.RAC.HD.GMG1", central: "RAC.HD", status: "Pendente Gerente Aprov. Orçamento", fase: "FASE 2", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587239808", pendencias: "PENDENTE" },
-            { os: "587239783", pc: "PENDENTE", fornecedor: "ENERG", ddd: "PAA", site: "F.SP.PAA.VR.GMG1", central: "PAA.VR", status: "Pendente Gerente de Divisão Aprov. Orçamento", fase: "FASE 3", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587239799", pendencias: "PENDENTE" },
-            { os: "587257353", pc: "PENDENTE", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.IDU.MR", central: "IDU.MR", status: "Pendente Gerente de Divisão Aprov. Orçamento", fase: "FASE 3", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587257366", pendencias: "PENDENTE" },
-            { os: "586817249", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.MC", central: "SRR.MC", status: "OS em Processo de Faturamento", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015225", pendencias: "Sim" },
-            { os: "586886737", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.GC", central: "RPO.GC", status: "OS em Processo de Faturamento", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015228", pendencias: "Sim" },
-            { os: "586886703", pc: "SIM", fornecedor: "KILOWATTS", ddd: "PAA", site: "F.SP.CDP.GK", central: "CDP.GK", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015227", pendencias: "Sim" },
-            { os: "586886700", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD18", site: "F.SP.ARC.XN", central: "ARC.XN", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015226", pendencias: "Sim" },
-            { os: "586817232", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.CL", central: "CAS.CL", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015196", pendencias: "Sim" },
-            { os: "586817250", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.UTB.LZ", central: "UTB.LZ", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015185", pendencias: "Sim" },
-            { os: "586817243", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.NA", central: "CAS.NA", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015206", pendencias: "Sim" },
-            { os: "586817236", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.SJC.JS", central: "SJC.JS", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015164", pendencias: "Sim" },
-            { os: "586817248", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.AM", central: "CAS.AM", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015193", pendencias: "Sim" },
-            { os: "586817238", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.SJC.TT", central: "SJC.TT", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015176", pendencias: "Sim" },
-            { os: "586872106", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.CPJ.ER", central: "CPJ.ER", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015184", pendencias: "Sim" },
-            { os: "586817240", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.ORN.MP", central: "ORN.MP", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015191", pendencias: "Sim" },
-            { os: "586817246", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.CE", central: "BRU.CE", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015189", pendencias: "Sim" },
-            { os: "586817242", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.AC", central: "BRU.AC", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "N.a", pendencias: "N.A" },
-            { os: "586950583", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.TTE.IN.GMG1", central: "TTE.IN", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080771", pendencias: "Sim" },
-            { os: "586950585", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.TTE.SJ.GMG1", central: "TTE.SJ", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080776", pendencias: "Sim" },
-            { os: "586948721", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.MC.GMG2", central: "SRR.MC", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067825", pendencias: "Sim" },
-            { os: "586950836", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.SRR.VS.GMG2", central: "SRR.VS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067826", pendencias: "Sim" },
-            { os: "586950671", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.OV.GMG1", central: "CAS.OV", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587073865", pendencias: "Sim" },
-            { os: "586950660", pc: "SIM", fornecedor: "KILOWATTS", ddd: "CAS", site: "F.SP.PDA.AP.GMG1", central: "PDA.AP", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587073869", pendencias: "Sim" },
-            { os: "587063861", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.LG.GMG1", central: "RPO.LG", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067673", pendencias: "Sim" },
-            { os: "586950607", pc: "SIM", fornecedor: "SISTEL", ddd: "DDD14", site: "F.SP.MIA.JA.GMG1", central: "MIA.JA", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015229", pendencias: "Sim" },
-            { os: "586887613", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.AC.GMG2.USCA1", central: "BRU.AC", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067799", pendencias: "Sim" },
-            { os: "586950649", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.OE.GMG1", central: "RPO.OE", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015232", pendencias: "Sim" },
-            { os: "586950612", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.MIA.JA.GMG2", central: "MIA.JA", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067823", pendencias: "Sim" },
-            { os: "586950635", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.VS.GMG3", central: "SRR.VS", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067830", pendencias: "Sim" },
-            { os: "586950658", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.CB.GMG3", central: "CAS.CB", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067832", pendencias: "Sim" },
-            { os: "586950657", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.CB.GMG1", central: "CAS.CB", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015234", pendencias: "Sim" },
-            { os: "586950688", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.QF.GMG1", central: "RPO.QF", status: "OS em Processo de Faturamento", fase: "FASE 3", servico: "Concluido", dataServico: "Concluido", osModulo: "587082003", pendencias: "Sim" },
-            { os: "586950606", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.AVR.SC.GMG1", central: "AVR.SC", status: "Execução Concluída / Pendente Aprov. Supv", fase: "FASE 3", servico: "Concluido", dataServico: "Concluido", osModulo: "587081972", pendencias: "Sim" },
-            { os: "586950689", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.SRA.AC.GMG1", central: "SRA.AC", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Concluido", dataServico: "Concluido", osModulo: "587082002", pendencias: "Sim" },
-            { os: "586950576", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.GTA.NG.GMG1", central: "GTA.NG", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "10/20/2026", osModulo: "587080768", pendencias: "Sim" },
-            { os: "586950566", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.JCI.JM.GMG1", central: "JCI.JM", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080770", pendencias: "Sim" },
-            { os: "586950630", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.MIA.JA.GMG3", central: "MIA.JA", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587067824", pendencias: "Sim" },
-            { os: "586951194", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.CR.GMG1", central: "SOC.CR", status: "Execução Incompleta", fase: "FASE 2", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082026", pendencias: "Sim" },
-            { os: "586951204", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.CR.GMG2", central: "SOC.CR", status: "Execução Incompleta", fase: "FASE 2", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082023", pendencias: "Sim" },
-            { os: "586950840", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.VS.GMG3", central: "SRR.VS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587067830", pendencias: "Sim" },
-            { os: "586950677", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.MOR.JP.GMG1", central: "MOR.JP", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/3/2026", osModulo: "587073867", pendencias: "Sim" },
-            { os: "586950721", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.SNG.SM.GMG1", central: "SNG.SM", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587073870", pendencias: "Sim" },
-            { os: "587083792", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.RD.GMG1", central: "SRR.RD", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587083822", pendencias: "Sim" },
-            { os: "586950675", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.MGU.HC.GMG1", central: "MGU.HC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587081998", pendencias: "Sim" },
-            { os: "586950639", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.EL.GMG1", central: "SRR.EL", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587082008", pendencias: "Sim" },
-            { os: "586950587", pc: "SIM", fornecedor: "CICLO", ddd: "DDD18", site: "F.SP.PPE.BG.GMG1", central: "PPE.BG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/28/2026", osModulo: "587081997", pendencias: "Sim" },
-            { os: "586950663", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.VC.GMG1", central: "CAS.VC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/9/2026", osModulo: "587081958", pendencias: "Sim" },
-            { os: "586950699", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.CAS.BE.GMG1", central: "CAS.BE", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/12/2026", osModulo: "587081963", pendencias: "Sim" },
-            { os: "586950641", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.FND.GS.GMG1", central: "FND.GS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587082007", pendencias: "Sim" },
-            { os: "587192142", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.ADT.EC.GMG1", central: "ADT.EC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/13/2026", osModulo: "587081974", pendencias: "Sim" },
-            { os: "586950697", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.LOU.SA.GMG1", central: "LOU.SA", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587081940", pendencias: "Sim" },
-            { os: "587169916", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.UTB.PG", central: "UTB.PG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/23/2026", osModulo: "587248537", pendencias: "Sim" },
-            { os: "586950590", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.PPE.SG.GMG1", central: "PPE.SG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587081995", pendencias: "Sim" },
-            { os: "586950601", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.TUP.RC.GMG1", central: "TUP.RC", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/30/2026", osModulo: "587081969", pendencias: "Sim" },
-            { os: "586951209", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.BTV.AB.GMG1", central: "BTV.AB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082017", pendencias: "Sim" },
-            { os: "586951213", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.CQO.RF.GMG1", central: "CQO.RF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082011", pendencias: "Sim" },
-            { os: "586951211", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.IGA.QB.GMG1", central: "IGA.QB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082013", pendencias: "Sim" },
-            { os: "586951210", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.PRF.PF.GMG1", central: "PRF.PF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/24/2026", osModulo: "587082015", pendencias: "Sim" },
-            { os: "586951205", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.AP.GMG1", central: "SOC.AP", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082020", pendencias: "Sim" },
-            { os: "586951208", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.TIE.TT.GMG1", central: "TIE.TT", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/24/2026", osModulo: "587082018", pendencias: "Sim" },
-            { os: "586950654", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.ABS.FM.GMG1", central: "ABS.FM", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587081977", pendencias: "Sim" },
-            { os: "586950780", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.BG.GMG1", central: "CAS.BG", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/29/2026", osModulo: "587081954", pendencias: "Sim" },
-            { os: "586950667", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.IDU.DP.GMG1", central: "IDU.DP", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/26/2026", osModulo: "587081961", pendencias: "Sim" },
-            { os: "586950596", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.BRU.RE.GMG1", central: "BRU.RE", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/23/2026", osModulo: "587081970", pendencias: "Sim" },
-            { os: "586950633", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.MIA.SR.GMG1", central: "MIA.SR", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/4/2026", osModulo: "587082001", pendencias: "Sim" },
-            { os: "586950598", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.BRU.VA.GMG1", central: "BRU.VA", status: "Em Execução", fase: "FASE 3", servico: "Programação", dataServico: "10/22/2026", osModulo: "587081968", pendencias: "Sim" },
-            { os: "586950594", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.DRA.RB.GMG1", central: "DRA.RB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/6/2026", osModulo: "587081950", pendencias: "Sim" },
-            { os: "586950593", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.ADD.AD.GMG1", central: "ADD.AD", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/10/2026", osModulo: "587081947", pendencias: "Sim" },
-            { os: "587084506", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.AVR.RD.GMG1.USCA1", central: "AVR.RD", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587084513", pendencias: "Sim" },
-            { os: "587084043", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.JOB.NJ.GMG1", central: "JOB.NJ", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587084065", pendencias: "Sim" },
-            { os: "586950645", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.SFL.DZ.GMG1", central: "SFL.DZ", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587082006", pendencias: "Sim" },
-            { os: "587083916", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.BRS.BR.GMG1", central: "BRS.BR", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/5/2026", osModulo: "587083917", pendencias: "Sim" },
-            { os: "587083829", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.VT.GMG1", central: "SRR.VT", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/31/2026", osModulo: "587083832", pendencias: "Sim" },
-            { os: "587189073", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.BRU.VF.GMG1", central: "BRU.VF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/3/2026", osModulo: "587189064", pendencias: "Sim" },
-            { os: "587083918", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.BDO.JM.GMG1", central: "BDO.JM", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/5/2026", osModulo: "587083919", pendencias: "Sim" }
-        ];
+    <!-- SUCESSO / BANNER DE OBJETIVO -->
+    <div class="alert-banner">
+        <div class="alert-left">
+            <span style="font-size: 1.1rem;">✅</span>
+            <span id="statusMessage"><strong>Sucesso:</strong> Base de dados sincronizada e atualizada em tempo real com a planilha.</span>
+        </div>
+        <div class="objective-pill">
+            Objetivo: Conclusão e Regularização dos Retrofits SPI
+        </div>
+    </div>
 
-        let trendChartInstance = null;
-        let supplierChartInstance = null;
+    <!-- CARDS SUPERIORES DE RESUMO DE KPI -->
+    <div class="kpi-grid">
+        <!-- TOTAL -->
+        <div class="kpi-card kpi-total">
+            <div class="kpi-header">
+                <span class="kpi-title">TOTAL DEMANDAS</span>
+                <span class="kpi-icon">ℹ️</span>
+            </div>
+            <div class="kpi-body">
+                <span class="kpi-value" id="kpiTotal">0</span>
+                <span class="kpi-badge">100% da Base</span>
+            </div>
+            <div class="kpi-footer">
+                <span>Base Mapeada:</span>
+                <span id="kpiTotalFooter">0 USCAs</span>
+            </div>
+        </div>
 
-        function populateDropdowns() {
-            const fornecedores = [...new Set(dataset.map(d => d.fornecedor))].sort();
-            const ddds = [...new Set(dataset.map(d => d.ddd))].sort();
-            const statusList = [...new Set(dataset.map(d => d.status))].sort();
-            const fases = [...new Set(dataset.map(d => d.fase))].sort();
+        <!-- EXECUTADAS (VERDE) -->
+        <div class="kpi-card kpi-executado">
+            <div class="kpi-header">
+                <span class="kpi-title">EXECUTADAS / FATURADAS</span>
+                <span class="kpi-icon">✅</span>
+            </div>
+            <div class="kpi-body">
+                <span class="kpi-value" id="kpiExec">0</span>
+                <span class="kpi-badge" id="kpiExecPct">0% do total</span>
+            </div>
+            <div class="kpi-footer">
+                <span>Status:</span>
+                <span>Concluído / Faturado</span>
+            </div>
+        </div>
 
-            const selForn = document.getElementById('filterFornecedor');
-            fornecedores.forEach(f => selForn.add(new Option(f, f)));
+        <!-- PROGRAMADAS (AZUL) -->
+        <div class="kpi-card kpi-programado">
+            <div class="kpi-header">
+                <span class="kpi-title">PROGRAMADAS</span>
+                <span class="kpi-icon">📅</span>
+            </div>
+            <div class="kpi-body">
+                <span class="kpi-value" id="kpiProg">0</span>
+                <span class="kpi-badge" id="kpiProgPct">0% do total</span>
+            </div>
+            <div class="kpi-footer">
+                <span>Em Agendamento:</span>
+                <span>Com Data Marcada</span>
+            </div>
+        </div>
 
-            const selDDD = document.getElementById('filterDDD');
-            ddds.forEach(d => selDDD.add(new Option(d, d)));
+        <!-- PENDENTES (LARANJA) -->
+        <div class="kpi-card kpi-pendente">
+            <div class="kpi-header">
+                <span class="kpi-title">PENDENTES / OUTROS</span>
+                <span class="kpi-icon">⌛</span>
+            </div>
+            <div class="kpi-body">
+                <span class="kpi-value" id="kpiPend">0</span>
+                <span class="kpi-badge" id="kpiPendPct">0% do total</span>
+            </div>
+            <div class="kpi-footer">
+                <span>Situação:</span>
+                <span>Sem Data / Aprovação</span>
+            </div>
+        </div>
 
-            const selStatus = document.getElementById('filterStatus');
-            statusList.forEach(s => selStatus.add(new Option(s, s)));
+        <!-- AGUARD. APROVAÇÃO (ROXO) -->
+        <div class="kpi-card kpi-aprovacao">
+            <div class="kpi-header">
+                <span class="kpi-title">AGUARD. APROVAÇÃO</span>
+                <span class="kpi-icon">⚠️</span>
+            </div>
+            <div class="kpi-body">
+                <span class="kpi-value" id="kpiAprov">0</span>
+                <span class="kpi-badge" id="kpiAprovPct">0% do total</span>
+            </div>
+            <div class="kpi-footer">
+                <span>Fluxo Orçamentário:</span>
+                <span>Aprovação Pendente</span>
+            </div>
+        </div>
+    </div>
 
-            const selFase = document.getElementById('filterFase');
-            fases.forEach(fa => selFase.add(new Option(fa, fa)));
-        }
+    <!-- FILTROS DE PESQUISA -->
+    <div class="filter-card">
+        <div class="filter-title-row">
+            <span class="filter-title">🔻 FILTROS DE PESQUISA</span>
+            <button class="btn-clear-filters" onclick="resetFilters()">🧹 Limpar Filtros</button>
+        </div>
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label>FORNECEDOR</label>
+                <select id="filterFornecedor" onchange="applyFilters()">
+                    <option value="">Todos os Fornecedores</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>DDD</label>
+                <select id="filterDDD" onchange="applyFilters()">
+                    <option value="">Todos os DDDs</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>STATUS OS</label>
+                <select id="filterStatus" onchange="applyFilters()">
+                    <option value="">Todos os Status</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>FASE</label>
+                <select id="filterFase" onchange="applyFilters()">
+                    <option value="">Todas as Fases</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>PENDÊNCIA</label>
+                <select id="filterPendencia" onchange="applyFilters()">
+                    <option value="">Todas as Pendências</option>
+                </select>
+            </div>
+        </div>
+    </div>
 
-        function applyFilters() {
-            const fornVal = document.getElementById('filterFornecedor').value;
-            const dddVal = document.getElementById('filterDDD').value;
-            const statusVal = document.getElementById('filterStatus').value;
-            const faseVal = document.getElementById('filterFase').value;
-            const pendVal = document.getElementById('filterPendencia').value;
-            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+    <!-- TABELAS EXECUTIVAS -->
+    <div class="two-columns">
+        <div class="card-box">
+            <div class="card-box-header">EVOLUÇÃO ACUMULADA POR MARCO</div>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Marco</th>
+                        <th>Novas entregas</th>
+                        <th>Acumulado</th>
+                        <th>Avanço %</th>
+                        <th>Situação</th>
+                    </tr>
+                </thead>
+                <tbody id="marcoTableBody">
+                    <!-- Gerado dinamicamente via planilha -->
+                </tbody>
+            </table>
+        </div>
 
-            const filtered = dataset.filter(item => {
-                const matchForn = !fornVal || item.fornecedor === fornVal;
-                const matchDDD = !dddVal || item.ddd === dddVal;
-                const matchStatus = !statusVal || item.status === statusVal;
-                const matchFase = !faseVal || item.fase === faseVal;
-                const matchPend = !pendVal || item.pendencias === pendVal || (pendVal === 'PENDENTE' && item.pc === 'PENDENTE');
-                
-                const matchSearch = !searchVal || 
-                    item.os.toLowerCase().includes(searchVal) ||
-                    item.site.toLowerCase().includes(searchVal) ||
-                    item.central.toLowerCase().includes(searchVal) ||
-                    item.fornecedor.toLowerCase().includes(searchVal) ||
-                    item.status.toLowerCase().includes(searchVal);
+        <div class="card-box">
+            <div class="card-box-header">FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS</div>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Fornecedor</th>
+                        <th>Concluído</th>
+                        <th>Até 31/10</th>
+                        <th>Até 13/11</th>
+                        <th>Sem data</th>
+                        <th>Aguard. Aprov.</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="supplierTableBody">
+                    <!-- Gerado dinamicamente via planilha -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-                return matchForn && matchDDD && matchStatus && matchFase && matchPend && matchSearch;
-            });
+    <!-- GRÁFICOS VISUAIS -->
+    <div class="two-columns">
+        <div class="card-box">
+            <div class="card-box-header">DISTRIBUIÇÃO POR STATUS E FORNECEDOR</div>
+            <div class="chart-wrapper">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+        <div class="card-box">
+            <div class="card-box-header">CURVA DE AVANÇO ACUMULADO</div>
+            <div class="chart-wrapper">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+    </div>
 
-            renderTable(filtered);
-            updateKPIs(filtered);
-            updateSupplierChart(filtered);
-        }
+    <!-- DADOS DETALHADOS COM BUSCA -->
+    <div class="card-box">
+        <div class="card-box-header">BASE DE DADOS COMPLETA DO RETROFIT</div>
+        <div class="search-box">
+            <input type="text" id="searchInput" onkeyup="filterSearchTable()" placeholder="🔍 Digite para pesquisar em qualquer coluna (Site, OS, Central, Status, Fornecedor)...">
+        </div>
+        <div class="table-scroll">
+            <table class="data-table" id="mainDataTable">
+                <thead>
+                    <tr>
+                        <th>OS Retrofit</th>
+                        <th>Pc</th>
+                        <th>Fornecedor</th>
+                        <th>DDD</th>
+                        <th>Site</th>
+                        <th>Central</th>
+                        <th>Status OS</th>
+                        <th>Fase</th>
+                        <th>Serviço</th>
+                        <th>Data Serviço</th>
+                        <th>Pendências</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    <!-- Preenchido via planilha -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+</div>
 
-            document.getElementById('rowCount').textContent = `${data.length} registros`;
+<script>
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQw6N6CcmNbYYL3A3DqYK4obljiAeoC0DYe9XKlIbLJ1zm_6owe-XCvLXGWxpWUOA/pub?gid=1856434919&single=true&output=csv";
 
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400 font-medium">Nenhuma demanda encontrada para os filtros selecionados.</td></tr>`;
-                return;
+    let currentDataset = [];
+    let barChartInstance = null;
+    let lineChartInstance = null;
+
+    function loadGoogleSheetsData() {
+        document.getElementById('statusMessage').innerHTML = '<strong>Sincronizando:</strong> Conectando à planilha do Google Sheets...';
+
+        Papa.parse(SHEET_CSV_URL, {
+            download: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                if (results.data && results.data.length > 1) {
+                    const parsedData = results.data.slice(1).map(row => [
+                        row[0] || '',  // OS Retrofit
+                        row[1] || '',  // Pc
+                        row[2] || '',  // Fornecedor
+                        row[5] || '',  // DDD
+                        row[6] || '',  // Site
+                        row[7] || '',  // Central
+                        row[8] || '',  // Status OS
+                        row[9] || '',  // Fase
+                        row[11] || '', // Serviço
+                        row[12] || '', // Data Serviço
+                        row[23] || row[1] || '' // Pendencias
+                    ]);
+
+                    currentDataset = parsedData;
+                    updateDashboardWithData(currentDataset);
+                    document.getElementById('statusMessage').innerHTML = '<strong>Sucesso:</strong> Base de dados sincronizada e atualizada em tempo real com a planilha.';
+                }
+            },
+            error: function(err) {
+                console.error("Erro na leitura do Google Sheets:", err);
+                document.getElementById('statusMessage').innerHTML = '<strong>Aviso:</strong> Falha ao sincronizar com o Google Sheets. Verifique a publicação do arquivo CSV.';
             }
+        });
 
-            data.forEach((row, idx) => {
-                const tr = document.createElement('tr');
-                tr.className = idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100';
+        const now = new Date();
+        document.getElementById('syncTime').textContent = now.toTimeString().split(' ')[0];
+    }
 
-                let statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${row.status}</span>`;
-                if (row.servico === 'Concluido' || row.status.includes('Faturamento') || row.status === 'Faturado') {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${row.status}</span>`;
-                } else if (row.status.includes('Pendente')) {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">${row.status}</span>`;
-                } else if (row.servico === 'Programação') {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">${row.status}</span>`;
+    function updateDashboardWithData(data) {
+        populateFilterDropdowns(data);
+        renderTable(data);
+        updateKPIs(data);
+        updateMarcoTable(data);
+        updateSupplierTable(data);
+        renderCharts(data);
+    }
+
+    function populateFilterDropdowns(data) {
+        const fornecedores = [...new Set(data.map(r => r[2]))].filter(Boolean).sort();
+        const ddds = [...new Set(data.map(r => r[3]))].filter(Boolean).sort();
+        const statusList = [...new Set(data.map(r => r[6]))].filter(Boolean).sort();
+        const fases = [...new Set(data.map(r => r[7]))].filter(Boolean).sort();
+        const pendencias = [...new Set(data.map(r => r[10]))].filter(Boolean).sort();
+
+        fillSelect('filterFornecedor', fornecedores);
+        fillSelect('filterDDD', ddds);
+        fillSelect('filterStatus', statusList);
+        fillSelect('filterFase', fases);
+        fillSelect('filterPendencia', pendencias);
+    }
+
+    function fillSelect(id, options) {
+        const select = document.getElementById(id);
+        const currentVal = select.value;
+        select.innerHTML = `<option value="">Todos os ${id.replace('filter','')}</option>`;
+        options.forEach(opt => {
+            if(opt && opt !== "N.A") {
+                const el = document.createElement('option');
+                el.value = opt;
+                el.textContent = opt;
+                if (opt === currentVal) el.selected = true;
+                select.appendChild(el);
+            }
+        });
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('dataTableBody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            row.forEach((cell, idx) => {
+                const td = document.createElement('td');
+                td.textContent = cell;
+
+                if (idx === 6 && (cell.includes('Faturado') || cell.includes('Executado') || cell.includes('Concluída'))) {
+                    td.className = 'status-concluido';
+                } else if (idx === 6 && cell.includes('Pendente')) {
+                    td.className = 'status-pendente';
                 }
 
-                let pendBadge = row.pendencias === 'PENDENTE' || row.pc === 'PENDENTE'
-                    ? `<span class="bg-rose-100 text-rose-800 font-extrabold px-2 py-0.5 rounded text-[10px] inline-block">PENDENTE</span>`
-                    : `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px] inline-block">OK</span>`;
+                if (idx === 10 && cell === 'PENDENTE') {
+                    td.className = 'status-pendente';
+                }
 
-                tr.innerHTML = `
-                    <td class="p-2.5 font-bold text-slate-900">${row.os}</td>
-                    <td class="p-2.5 font-semibold text-slate-600">${row.pc}</td>
-                    <td class="p-2.5 font-bold text-slate-800">${row.fornecedor}</td>
-                    <td class="p-2.5 text-slate-600">${row.ddd}</td>
-                    <td class="p-2.5 font-mono text-[11px] text-sky-700 font-bold">${row.site}</td>
-                    <td class="p-2.5 text-slate-600">${row.central}</td>
-                    <td class="p-2.5">${statusBadge}</td>
-                    <td class="p-2.5 font-semibold text-slate-600">${row.fase}</td>
-                    <td class="p-2.5 font-medium">${row.servico}</td>
-                    <td class="p-2.5 text-slate-600 font-mono text-[11px]">${row.dataServico}</td>
-                    <td class="p-2.5 font-mono text-[11px] text-slate-500">${row.osModulo}</td>
-                    <td class="p-2.5 text-center">${pendBadge}</td>
-                `;
-                tbody.appendChild(tr);
+                tr.appendChild(td);
             });
-        }
+            tbody.appendChild(tr);
+        });
+    }
 
-        function updateKPIs(data) {
-            const total = data.length;
-            const executadas = data.filter(d => d.servico === 'Concluido' || d.status === 'Faturado' || d.status.includes('Faturamento')).length;
-            const programadas = data.filter(d => d.servico === 'Programação').length;
-            const aprovacao = data.filter(d => d.status.includes('Pendente') || d.pc === 'PENDENTE').length;
-            const pendentes = total - executadas - programadas;
+    function updateKPIs(data) {
+        const total = data.length;
+        const exec = data.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado') || r[6].includes('Executado')).length;
+        const prog = data.filter(r => r[8] === 'Programação' || (r[9] && r[9].includes('/'))).length;
+        const aprov = data.filter(r => r[6].toLowerCase().includes('aprov')).length;
+        const pend = total - exec - prog;
 
-            document.getElementById('kpiTotal').textContent = total;
-            document.getElementById('kpiExecutadas').textContent = executadas;
-            document.getElementById('kpiProgramadas').textContent = programadas;
-            document.getElementById('kpiPendentes').textContent = pendentes < 0 ? 0 : pendentes;
-            document.getElementById('kpiAprovação').textContent = aprovacao;
+        document.getElementById('kpiTotal').textContent = total;
+        document.getElementById('kpiTotalFooter').textContent = total + " USCAs";
 
-            const execPct = total > 0 ? ((executadas / total) * 100).toFixed(1) : '0.0';
-            const progPct = total > 0 ? ((programadas / total) * 100).toFixed(1) : '0.0';
-            const pendPct = total > 0 ? ((pendentes / total) * 100).toFixed(1) : '0.0';
-            const aprovPct = total > 0 ? ((aprovacao / total) * 100).toFixed(1) : '0.0';
+        document.getElementById('kpiExec').textContent = exec;
+        document.getElementById('kpiExecPct').textContent = total ? ((exec / total) * 100).toFixed(1) + "% do total" : "0%";
 
-            document.getElementById('badgeExecutadas').textContent = `${execPct}% do total`;
-            document.getElementById('badgeProgramadas').textContent = `${progPct}% do total`;
-            document.getElementById('badgePendentes').textContent = `${pendPct}% do total`;
-            document.getElementById('badgeAprovacao').textContent = `${aprovPct}% do total`;
-        }
+        document.getElementById('kpiProg').textContent = prog;
+        document.getElementById('kpiProgPct').textContent = total ? ((prog / total) * 100).toFixed(1) + "% do total" : "0%";
 
-        function clearFilters() {
-            document.getElementById('filterFornecedor').value = '';
-            document.getElementById('filterDDD').value = '';
-            document.getElementById('filterStatus').value = '';
-            document.getElementById('filterFase').value = '';
-            document.getElementById('filterPendencia').value = '';
-            document.getElementById('searchInput').value = '';
-            applyFilters();
-        }
+        document.getElementById('kpiPend').textContent = Math.max(0, pend);
+        document.getElementById('kpiPendPct').textContent = total ? ((Math.max(0, pend) / total) * 100).toFixed(1) + "% do total" : "0%";
 
-        function initCharts() {
-            const ctxTrend = document.getElementById('trendChart').getContext('2d');
-            trendChartInstance = new Chart(ctxTrend, {
-                type: 'line',
-                data: {
-                    labels: ['Executado', 'Até 31/10', 'Até 13/11', 'Até 15/12'],
-                    datasets: [
-                        {
-                            label: 'Entregas Acumuladas',
-                            data: [33, 53, 67, 76],
-                            borderColor: '#0284c7',
-                            backgroundColor: 'rgba(2, 132, 199, 0.12)',
-                            fill: true,
-                            tension: 0.3,
-                            pointBackgroundColor: '#0284c7',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 2,
-                            pointRadius: 6,
-                            pointHoverRadius: 8
-                        },
-                        {
-                            label: 'Novas Entregas por Marco',
-                            data: [33, 21, 14, 9],
-                            borderColor: '#10b981',
-                            backgroundColor: '#10b981',
-                            type: 'bar',
-                            borderRadius: 4,
-                            barThickness: 24
-                        }
-                    ]
+        document.getElementById('kpiAprov').textContent = aprov;
+        document.getElementById('kpiAprovPct').textContent = total ? ((aprov / total) * 100).toFixed(1) + "% do total" : "0%";
+    }
+
+    function updateMarcoTable(data) {
+        const total = data.length;
+        const exec = data.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado') || r[6].includes('Executado')).length;
+        const ate31 = data.filter(r => r[9] && r[9].startsWith('10/')).length;
+        const ate13 = data.filter(r => r[9] && r[9].startsWith('11/')).length;
+        const ate15 = Math.max(0, total - (exec + ate31 + ate13));
+
+        const tbody = document.getElementById('marcoTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td>Executado</td>
+                <td>${exec}</td>
+                <td>${exec}</td>
+                <td>${total ? ((exec/total)*100).toFixed(1) : 0}%</td>
+                <td><span class="badge-status status-realizado">Realizado</span></td>
+            </tr>
+            <tr>
+                <td>Até 31/10</td>
+                <td>${ate31}</td>
+                <td>${exec + ate31}</td>
+                <td>${total ? (((exec + ate31)/total)*100).toFixed(1) : 0}%</td>
+                <td><span class="badge-status status-programado">Programado</span></td>
+            </tr>
+            <tr>
+                <td>Até 13/11</td>
+                <td>${ate13}</td>
+                <td class="text-purple">${exec + ate31 + ate13}</td>
+                <td>${total ? (((exec + ate31 + ate13)/total)*100).toFixed(1) : 0}%</td>
+                <td><span class="badge-status status-programado">Programado</span></td>
+            </tr>
+            <tr>
+                <td>Até 15/12</td>
+                <td>${ate15}</td>
+                <td>${total}</td>
+                <td>100,0%</td>
+                <td><span class="badge-status status-meta">Meta condicionada</span></td>
+            </tr>
+            <tr style="font-weight: bold; background-color: #f8fafc;">
+                <td>TOTAL</td>
+                <td>${total}</td>
+                <td>${total}</td>
+                <td>100,0%</td>
+                <td>-</td>
+            </tr>
+        `;
+    }
+
+    function updateSupplierTable(data) {
+        const suppliers = [...new Set(data.map(r => r[2]))].filter(Boolean).sort();
+        const tbody = document.getElementById('supplierTableBody');
+        tbody.innerHTML = '';
+
+        let totExec = 0, tot31 = 0, tot13 = 0, totSemData = 0, totAprov = 0, totGeral = 0;
+
+        suppliers.forEach(sup => {
+            const supData = data.filter(r => r[2] === sup);
+            const exec = supData.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado')).length;
+            const ate31 = supData.filter(r => r[9] && r[9].startsWith('10/')).length;
+            const ate13 = supData.filter(r => r[9] && r[9].startsWith('11/')).length;
+            const aprov = supData.filter(r => r[6].toLowerCase().includes('aprov')).length;
+            const semData = supData.filter(r => r[9] === 'Sem Data' || !r[9] || r[9] === 'Aguard. Aprovação').length;
+            const total = supData.length;
+
+            totExec += exec; tot31 += ate31; tot13 += ate13;
+            totSemData += semData; totAprov += aprov; totGeral += total;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${sup}</td>
+                <td class="text-purple">${exec}</td>
+                <td>${ate31}</td>
+                <td>${ate13}</td>
+                <td>${semData}</td>
+                <td class="text-orange">${aprov}</td>
+                <td>${total}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        tbody.innerHTML += `
+            <tr style="font-weight: bold; background-color: #f8fafc;">
+                <td>TOTAL</td>
+                <td class="text-purple">${totExec}</td>
+                <td>${tot31}</td>
+                <td>${tot13}</td>
+                <td>${totSemData}</td>
+                <td class="text-orange">${totAprov}</td>
+                <td>${totGeral}</td>
+            </tr>
+        `;
+    }
+
+    function applyFilters() {
+        const fForn = document.getElementById('filterFornecedor').value;
+        const fDDD = document.getElementById('filterDDD').value;
+        const fStat = document.getElementById('filterStatus').value;
+        const fFase = document.getElementById('filterFase').value;
+        const fPend = document.getElementById('filterPendencia').value;
+
+        const filtered = currentDataset.filter(r => {
+            return (!fForn || r[2] === fForn) &&
+                   (!fDDD || r[3] === fDDD) &&
+                   (!fStat || r[6] === fStat) &&
+                   (!fFase || r[7] === fFase) &&
+                   (!fPend || r[10] === fPend);
+        });
+
+        renderTable(filtered);
+        updateKPIs(filtered);
+        updateMarcoTable(filtered);
+        updateSupplierTable(filtered);
+        renderCharts(filtered);
+    }
+
+    function resetFilters() {
+        document.getElementById('filterFornecedor').value = '';
+        document.getElementById('filterDDD').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterFase').value = '';
+        document.getElementById('filterPendencia').value = '';
+        document.getElementById('searchInput').value = '';
+        updateDashboardWithData(currentDataset);
+    }
+
+    function filterSearchTable() {
+        const input = document.getElementById('searchInput').value.toUpperCase();
+        const trs = document.querySelectorAll('#mainDataTable tbody tr');
+
+        trs.forEach(tr => {
+            const text = tr.innerText.toUpperCase();
+            tr.style.display = text.includes(input) ? '' : 'none';
+        });
+    }
+
+    function renderCharts(data) {
+        const suppliers = [...new Set(data.map(r => r[2]))].filter(Boolean).sort();
+        const execData = suppliers.map(s => data.filter(r => r[2] === s && (r[8] === 'Concluido' || r[6].includes('Faturado'))).length);
+        const progData = suppliers.map(s => data.filter(r => r[2] === s && r[8] === 'Programação').length);
+        const pendData = suppliers.map(s => data.filter(r => r[2] === s && r[6].toLowerCase().includes('aprov')).length);
+
+        const ctxBar = document.getElementById('barChart').getContext('2d');
+        if (barChartInstance) barChartInstance.destroy();
+
+        barChartInstance = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: suppliers,
+                datasets: [
+                    { label: 'Concluído', data: execData, backgroundColor: '#059669' },
+                    { label: 'Programado', data: progData, backgroundColor: '#0284c7' },
+                    { label: 'Aguard. Aprovação', data: pendData, backgroundColor: '#d97706' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, grid: { color: '#f1f5f9' } }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' } } }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }
-                    }
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
                 }
-            });
+            }
+        });
 
-            const ctxSupplier = document.getElementById('supplierChart').getContext('2d');
-            supplierChartInstance = new Chart(ctxSupplier, {
-                type: 'bar',
-                data: {
-                    labels: ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'],
-                    datasets: [
-                        { label: 'Concluído', data: [10, 11, 3, 8, 1], backgroundColor: '#10b981' },
-                        { label: 'Programado', data: [5, 6, 7, 16, 0], backgroundColor: '#0284c7' },
-                        { label: 'Sem Data / Pendente', data: [0, 1, 8, 0, 0], backgroundColor: '#f97316' }
-                    ]
+        const total = data.length;
+        const exec = data.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado')).length;
+        const ate31 = data.filter(r => r[9] && r[9].startsWith('10/')).length;
+        const ate13 = data.filter(r => r[9] && r[9].startsWith('11/')).length;
+
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        if (lineChartInstance) lineChartInstance.destroy();
+
+        lineChartInstance = new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: ['Executado', 'Até 31/10', 'Até 13/11', 'Até 15/12'],
+                datasets: [{
+                    label: 'USCAs Acumuladas',
+                    data: [exec, exec + ate31, exec + ate31 + ate13, total],
+                    borderColor: '#0284c7',
+                    backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#0284c7'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { min: 0, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } },
-                        y: { stacked: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } }
-                    },
-                    plugins: {
-                        legend: { position: 'top', labels: { font: { size: 10 } } }
-                    }
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
                 }
-            });
-        }
+            }
+        });
+    }
 
-        function updateSupplierChart(filteredData) {
-            if (!supplierChartInstance) return;
+    function exportBase() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "OS Retrofit;Pc;Fornecedor;DDD;Site;Central;Status OS;Fase;Serviço;Data Serviço;Pendencias\n";
 
-            const fornecedores = ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'];
-            const concluidos = [];
-            const programados = [];
-            const pendentes = [];
+        currentDataset.forEach(row => {
+            csvContent += row.join(";") + "\n";
+        });
 
-            fornecedores.forEach(f => {
-                const items = filteredData.filter(d => d.fornecedor === f);
-                const conc = items.filter(d => d.servico === 'Concluido' || d.status === 'Faturado' || d.status.includes('Faturamento')).length;
-                const prog = items.filter(d => d.servico === 'Programação').length;
-                const pend = items.length - conc - prog;
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "RETROFIT_USCAs_SPI.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
-                concluidos.push(conc);
-                programados.push(prog);
-                pendentes.push(pend < 0 ? 0 : pend);
-            });
+    window.onload = loadGoogleSheetsData;
+</script>
 
-            supplierChartInstance.data.datasets[0].data = concluidos;
-            supplierChartInstance.data.datasets[1].data = programados;
-            supplierChartInstance.data.datasets[2].data = pendentes;
-            supplierChartInstance.update();
-        }
-
-        function triggerSync() {
-            const icon = document.getElementById('syncIcon');
-            icon.classList.add('fa-spin');
-            
-            setTimeout(() => {
-                icon.classList.remove('fa-spin');
-                const now = new Date();
-                const timeStr = now.toTimeString().split(' ')[0];
-                document.getElementById('syncTimestamp').textContent = timeStr;
-            }, 800);
-        }
-
-        function exportCSV() {
-            let csv = 'OS Retrofit,Pc,Fornecedor,DDD,Site,Central,Status OS,Fase,Servico,Data Servico,OS Modulo,Pendencias\n';
-            dataset.forEach(r => {
-                csv += `"${r.os}","${r.pc}","${r.fornecedor}","${r.ddd}","${r.site}","${r.central}","${r.status}","${r.fase}","${r.servico}","${r.dataServico}","${r.osModulo}","${r.pendencias}"\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', 'Base_Retrofit_USCAs_SPI.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function printReport() {
-            window.print();
-        }
-
-        window.onload = function () {
-            populateDropdowns();
-            initCharts();
-            applyFilters();
-        };
-    </script>
 </body>
 </html>
