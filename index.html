@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse para carregar CSV do Google Sheets em tempo real -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     
     <script>
         tailwind.config = {
@@ -85,10 +87,10 @@
             <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end border-t border-slate-700/60 lg:border-t-0 pt-3 lg:pt-0 no-print">
                 <div class="text-right mr-2 hidden sm:block">
                     <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">ÚLTIMA SINCRONIZAÇÃO</span>
-                    <span id="syncTimestamp" class="text-sm font-extrabold text-white">15:42:58</span>
+                    <span id="syncTimestamp" class="text-sm font-extrabold text-white">--:--:--</span>
                 </div>
                 
-                <button onclick="triggerSync()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
+                <button onclick="loadGoogleSheetsData()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
                     <i class="fa-solid fa-arrows-rotate" id="syncIcon"></i> Sincronizar
                 </button>
                 <button onclick="printReport()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
@@ -106,14 +108,14 @@
                 <div class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shrink-0 shadow-xs">
                     <i class="fa-solid fa-check"></i>
                 </div>
-                <span><strong>Sucesso:</strong> Base de dados publicada e atualizada dinamicamente com a planilha em tempo real.</span>
+                <span id="statusMessage"><strong>Sucesso:</strong> Base de dados publicada e atualizada dinamicamente com a planilha em tempo real.</span>
             </div>
             <div class="bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 rounded-md text-xs font-bold shadow-2xs self-end sm:self-auto">
                 Objetivo: Conclusão e Regularização dos Retrofits SPI
             </div>
         </div>
 
-        <!-- KPI CARDS ROW (HL5 IDENTICAL COLOR SYSTEM & TOP ACCENT BORDERS) -->
+        <!-- KPI CARDS ROW (CORES CORRESPONDENTES NOS NÚMEROS TOTAIS) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
             
             <!-- CARD 1: TOTAL DEMANDAS -->
@@ -130,18 +132,18 @@
                 </div>
                 <div class="text-xs font-semibold text-slate-500 pt-1.5 border-t border-slate-100 flex justify-between">
                     <span>Base Mapeada:</span>
-                    <span class="font-bold text-slate-700">76 USCAs</span>
+                    <span id="kpiTotalFooter" class="font-bold text-slate-700">76 USCAs</span>
                 </div>
             </div>
 
-            <!-- CARD 2: EXECUTADAS / FATURADAS (GREEN) -->
+            <!-- CARD 2: EXECUTADAS / FATURADAS (VERDE) -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-emerald-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">EXECUTADAS / FATURADAS</span>
                     <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiExecutadas" class="text-3xl font-black text-slate-900">33</span>
+                    <span id="kpiExecutadas" class="text-3xl font-black text-emerald-600">33</span>
                     <span id="badgeExecutadas" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
                         43.4% do total
                     </span>
@@ -152,14 +154,14 @@
                 </div>
             </div>
 
-            <!-- CARD 3: PROGRAMADAS (CYAN / SKY BLUE) -->
+            <!-- CARD 3: PROGRAMADAS (AZUL) -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-sky-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-sky-600">PROGRAMADAS</span>
                     <i class="fa-solid fa-calendar-check text-sky-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiProgramadas" class="text-3xl font-black text-slate-900">34</span>
+                    <span id="kpiProgramadas" class="text-3xl font-black text-sky-600">34</span>
                     <span id="badgeProgramadas" class="bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
                         44.7% do total
                     </span>
@@ -170,14 +172,14 @@
                 </div>
             </div>
 
-            <!-- CARD 4: PENDENTES / OUTROS (AMBER / ORANGE) -->
+            <!-- CARD 4: PENDENTES / OUTROS (LARANJA) -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-amber-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-amber-600">PENDENTES / OUTROS</span>
                     <i class="fa-solid fa-hourglass-half text-amber-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiPendentes" class="text-3xl font-black text-slate-900">9</span>
+                    <span id="kpiPendentes" class="text-3xl font-black text-amber-600">9</span>
                     <span id="badgePendentes" class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
                         11.8% do total
                     </span>
@@ -188,14 +190,14 @@
                 </div>
             </div>
 
-            <!-- CARD 5: AGUARD. APROVAÇÃO (PURPLE) -->
+            <!-- CARD 5: AGUARD. APROVAÇÃO (ROXO) -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-purple-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-purple-600">AGUARD. APROVAÇÃO</span>
                     <i class="fa-solid fa-triangle-exclamation text-purple-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiAprovação" class="text-3xl font-black text-slate-900">4</span>
+                    <span id="kpiAprovação" class="text-3xl font-black text-purple-600">4</span>
                     <span id="badgeAprovacao" class="bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
                         5.3% do total
                     </span>
@@ -208,7 +210,7 @@
 
         </div>
 
-        <!-- FILTROS DE PESQUISA (HL5 STYLE) -->
+        <!-- FILTROS DE PESQUISA -->
         <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3 no-print">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-sky-700">
@@ -276,45 +278,9 @@
                                     <th class="p-2 rounded-tr-md">Situação</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold text-slate-900">Executado</td>
-                                    <td class="p-2">33</td>
-                                    <td class="p-2 font-bold">33</td>
-                                    <td class="p-2 text-emerald-600 font-bold">43,4%</td>
-                                    <td class="p-2"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">Realizado</span></td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold text-slate-900">Até 31/10</td>
-                                    <td class="p-2">21</td>
-                                    <td class="p-2 font-bold">53</td>
-                                    <td class="p-2 text-sky-600 font-bold">69,7%</td>
-                                    <td class="p-2"><span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
-                                </tr>
-                                <tr class="hover:bg-purple-50/50 bg-purple-50/30">
-                                    <td class="p-2 text-left font-bold text-purple-950">Até 13/11</td>
-                                    <td class="p-2">14</td>
-                                    <td class="p-2 font-black text-purple-700">67</td>
-                                    <td class="p-2 text-purple-700 font-bold">88,2%</td>
-                                    <td class="p-2"><span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold text-slate-900">Até 15/12</td>
-                                    <td class="p-2">9</td>
-                                    <td class="p-2 font-bold">76</td>
-                                    <td class="p-2 text-amber-600 font-bold">100,0%</td>
-                                    <td class="p-2"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">Meta Cond.</span></td>
-                                </tr>
+                            <tbody id="marcoTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <!-- Gerado dinamicamente -->
                             </tbody>
-                            <tfoot>
-                                <tr class="bg-slate-100 font-bold text-slate-900 border-t border-slate-200">
-                                    <td class="p-2 text-left">TOTAL</td>
-                                    <td class="p-2">76</td>
-                                    <td class="p-2">76</td>
-                                    <td class="p-2">100,0%</td>
-                                    <td class="p-2">-</td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
                 </div>
@@ -340,71 +306,16 @@
                                     <th class="p-2 rounded-tr-md">Total</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">AC TECH</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">10</td>
-                                    <td class="p-2">2</td>
-                                    <td class="p-2">3</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2 font-bold text-slate-400">0</td>
-                                    <td class="p-2 font-bold">15</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">CICLO</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">11</td>
-                                    <td class="p-2">4</td>
-                                    <td class="p-2">3</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2 font-bold text-rose-600 bg-rose-50">1</td>
-                                    <td class="p-2 font-bold">18</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">ENERG</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">3</td>
-                                    <td class="p-2">2</td>
-                                    <td class="p-2">5</td>
-                                    <td class="p-2 font-bold text-amber-600">5</td>
-                                    <td class="p-2 font-bold text-rose-600 bg-rose-50">3</td>
-                                    <td class="p-2 font-bold">18</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">KILOWATTS</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">8</td>
-                                    <td class="p-2">13</td>
-                                    <td class="p-2">3</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2 font-bold text-slate-400">0</td>
-                                    <td class="p-2 font-bold">24</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50">
-                                    <td class="p-2 text-left font-bold">SISTEL</td>
-                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">1</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2">0</td>
-                                    <td class="p-2 font-bold text-slate-400">0</td>
-                                    <td class="p-2 font-bold">1</td>
-                                </tr>
+                            <tbody id="supplierTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <!-- Gerado dinamicamente -->
                             </tbody>
-                            <tfoot>
-                                <tr class="bg-slate-100 font-bold text-slate-900 border-t border-slate-200">
-                                    <td class="p-2 text-left">TOTAL</td>
-                                    <td class="p-2 text-emerald-700">33</td>
-                                    <td class="p-2">21</td>
-                                    <td class="p-2">14</td>
-                                    <td class="p-2 text-amber-600">5</td>
-                                    <td class="p-2 text-rose-600">4</td>
-                                    <td class="p-2">76</td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
                 </div>
 
                 <div class="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-xs flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation text-amber-600 text-sm shrink-0"></i>
-                    <span><strong>Atenção Gerencial:</strong> 5 USCAs sem data + 4 aguardando aprovação. A entrega até 15/12 depende de regularização.</span>
+                    <span><strong>Atenção Gerencial:</strong> Acompanhamento contínuo dos status de aprovação orçamentária e datas de agendamento em campo.</span>
                 </div>
             </div>
         </div>
@@ -450,7 +361,7 @@
                         <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Buscar OS, Site, Central, Status..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs font-medium focus:bg-white focus:border-sky-500 outline-none transition">
                     </div>
                     <span id="rowCount" class="bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0">
-                        76 registros
+                        0 registros
                     </span>
                 </div>
             </div>
@@ -474,7 +385,7 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
-                        <!-- Loaded dynamically -->
+                        <!-- Carregado via Planilha -->
                     </tbody>
                 </table>
             </div>
@@ -482,106 +393,78 @@
 
     </div>
 
-    <!-- SCRIPT DE DADOS E LÓGICA DE NEGÓCIO -->
+    <!-- SCRIPT DE SINCRONIZAÇÃO E LÓGICA COMPLETA -->
     <script>
-        const dataset = [
-            { os: "586950581", pc: "PENDENTE", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.CGT.MG.GMG1", central: "CGT.MG", status: "Pendente Aprov. Orçamento Corrigido", fase: "FASE 2", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587080766", pendencias: "PENDENTE" },
-            { os: "587239803", pc: "PENDENTE", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.RAC.HD.GMG1", central: "RAC.HD", status: "Pendente Gerente Aprov. Orçamento", fase: "FASE 2", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587239808", pendencias: "PENDENTE" },
-            { os: "587239783", pc: "PENDENTE", fornecedor: "ENERG", ddd: "PAA", site: "F.SP.PAA.VR.GMG1", central: "PAA.VR", status: "Pendente Gerente de Divisão Aprov. Orçamento", fase: "FASE 3", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587239799", pendencias: "PENDENTE" },
-            { os: "587257353", pc: "PENDENTE", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.IDU.MR", central: "IDU.MR", status: "Pendente Gerente de Divisão Aprov. Orçamento", fase: "FASE 3", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587257366", pendencias: "PENDENTE" },
-            { os: "586817249", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.MC", central: "SRR.MC", status: "OS em Processo de Faturamento", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015225", pendencias: "Sim" },
-            { os: "586886737", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.GC", central: "RPO.GC", status: "OS em Processo de Faturamento", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015228", pendencias: "Sim" },
-            { os: "586886703", pc: "SIM", fornecedor: "KILOWATTS", ddd: "PAA", site: "F.SP.CDP.GK", central: "CDP.GK", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015227", pendencias: "Sim" },
-            { os: "586886700", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD18", site: "F.SP.ARC.XN", central: "ARC.XN", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015226", pendencias: "Sim" },
-            { os: "586817232", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.CL", central: "CAS.CL", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015196", pendencias: "Sim" },
-            { os: "586817250", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.UTB.LZ", central: "UTB.LZ", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015185", pendencias: "Sim" },
-            { os: "586817243", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.NA", central: "CAS.NA", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015206", pendencias: "Sim" },
-            { os: "586817236", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.SJC.JS", central: "SJC.JS", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015164", pendencias: "Sim" },
-            { os: "586817248", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.AM", central: "CAS.AM", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015193", pendencias: "Sim" },
-            { os: "586817238", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.SJC.TT", central: "SJC.TT", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015176", pendencias: "Sim" },
-            { os: "586872106", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.CPJ.ER", central: "CPJ.ER", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015184", pendencias: "Sim" },
-            { os: "586817240", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.ORN.MP", central: "ORN.MP", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015191", pendencias: "Sim" },
-            { os: "586817246", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.CE", central: "BRU.CE", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015189", pendencias: "Sim" },
-            { os: "586817242", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.AC", central: "BRU.AC", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "N.a", pendencias: "N.A" },
-            { os: "586950583", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.TTE.IN.GMG1", central: "TTE.IN", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080771", pendencias: "Sim" },
-            { os: "586950585", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.TTE.SJ.GMG1", central: "TTE.SJ", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080776", pendencias: "Sim" },
-            { os: "586948721", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.MC.GMG2", central: "SRR.MC", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067825", pendencias: "Sim" },
-            { os: "586950836", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.SRR.VS.GMG2", central: "SRR.VS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067826", pendencias: "Sim" },
-            { os: "586950671", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.OV.GMG1", central: "CAS.OV", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587073865", pendencias: "Sim" },
-            { os: "586950660", pc: "SIM", fornecedor: "KILOWATTS", ddd: "CAS", site: "F.SP.PDA.AP.GMG1", central: "PDA.AP", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587073869", pendencias: "Sim" },
-            { os: "587063861", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.LG.GMG1", central: "RPO.LG", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067673", pendencias: "Sim" },
-            { os: "586950607", pc: "SIM", fornecedor: "SISTEL", ddd: "DDD14", site: "F.SP.MIA.JA.GMG1", central: "MIA.JA", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015229", pendencias: "Sim" },
-            { os: "586887613", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.AC.GMG2.USCA1", central: "BRU.AC", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067799", pendencias: "Sim" },
-            { os: "586950649", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.OE.GMG1", central: "RPO.OE", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015232", pendencias: "Sim" },
-            { os: "586950612", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.MIA.JA.GMG2", central: "MIA.JA", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067823", pendencias: "Sim" },
-            { os: "586950635", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.VS.GMG3", central: "SRR.VS", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067830", pendencias: "Sim" },
-            { os: "586950658", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.CB.GMG3", central: "CAS.CB", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067832", pendencias: "Sim" },
-            { os: "586950657", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.CB.GMG1", central: "CAS.CB", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015234", pendencias: "Sim" },
-            { os: "586950688", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.QF.GMG1", central: "RPO.QF", status: "OS em Processo de Faturamento", fase: "FASE 3", servico: "Concluido", dataServico: "Concluido", osModulo: "587082003", pendencias: "Sim" },
-            { os: "586950606", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.AVR.SC.GMG1", central: "AVR.SC", status: "Execução Concluída / Pendente Aprov. Supv", fase: "FASE 3", servico: "Concluido", dataServico: "Concluido", osModulo: "587081972", pendencias: "Sim" },
-            { os: "586950689", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.SRA.AC.GMG1", central: "SRA.AC", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Concluido", dataServico: "Concluido", osModulo: "587082002", pendencias: "Sim" },
-            { os: "586950576", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.GTA.NG.GMG1", central: "GTA.NG", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "10/20/2026", osModulo: "587080768", pendencias: "Sim" },
-            { os: "586950566", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.JCI.JM.GMG1", central: "JCI.JM", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080770", pendencias: "Sim" },
-            { os: "586950630", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.MIA.JA.GMG3", central: "MIA.JA", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587067824", pendencias: "Sim" },
-            { os: "586951194", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.CR.GMG1", central: "SOC.CR", status: "Execução Incompleta", fase: "FASE 2", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082026", pendencias: "Sim" },
-            { os: "586951204", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.CR.GMG2", central: "SOC.CR", status: "Execução Incompleta", fase: "FASE 2", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082023", pendencias: "Sim" },
-            { os: "586950840", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.VS.GMG3", central: "SRR.VS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587067830", pendencias: "Sim" },
-            { os: "586950677", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.MOR.JP.GMG1", central: "MOR.JP", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/3/2026", osModulo: "587073867", pendencias: "Sim" },
-            { os: "586950721", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.SNG.SM.GMG1", central: "SNG.SM", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587073870", pendencias: "Sim" },
-            { os: "587083792", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.RD.GMG1", central: "SRR.RD", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587083822", pendencias: "Sim" },
-            { os: "586950675", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.MGU.HC.GMG1", central: "MGU.HC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587081998", pendencias: "Sim" },
-            { os: "586950639", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.EL.GMG1", central: "SRR.EL", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587082008", pendencias: "Sim" },
-            { os: "586950587", pc: "SIM", fornecedor: "CICLO", ddd: "DDD18", site: "F.SP.PPE.BG.GMG1", central: "PPE.BG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/28/2026", osModulo: "587081997", pendencias: "Sim" },
-            { os: "586950663", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.VC.GMG1", central: "CAS.VC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/9/2026", osModulo: "587081958", pendencias: "Sim" },
-            { os: "586950699", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.CAS.BE.GMG1", central: "CAS.BE", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/12/2026", osModulo: "587081963", pendencias: "Sim" },
-            { os: "586950641", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.FND.GS.GMG1", central: "FND.GS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587082007", pendencias: "Sim" },
-            { os: "587192142", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.ADT.EC.GMG1", central: "ADT.EC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/13/2026", osModulo: "587081974", pendencias: "Sim" },
-            { os: "586950697", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.LOU.SA.GMG1", central: "LOU.SA", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587081940", pendencias: "Sim" },
-            { os: "587169916", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.UTB.PG", central: "UTB.PG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/23/2026", osModulo: "587248537", pendencias: "Sim" },
-            { os: "586950590", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.PPE.SG.GMG1", central: "PPE.SG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587081995", pendencias: "Sim" },
-            { os: "586950601", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.TUP.RC.GMG1", central: "TUP.RC", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/30/2026", osModulo: "587081969", pendencias: "Sim" },
-            { os: "586951209", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.BTV.AB.GMG1", central: "BTV.AB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082017", pendencias: "Sim" },
-            { os: "586951213", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.CQO.RF.GMG1", central: "CQO.RF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082011", pendencias: "Sim" },
-            { os: "586951211", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.IGA.QB.GMG1", central: "IGA.QB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082013", pendencias: "Sim" },
-            { os: "586951210", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.PRF.PF.GMG1", central: "PRF.PF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/24/2026", osModulo: "587082015", pendencias: "Sim" },
-            { os: "586951205", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.AP.GMG1", central: "SOC.AP", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082020", pendencias: "Sim" },
-            { os: "586951208", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.TIE.TT.GMG1", central: "TIE.TT", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/24/2026", osModulo: "587082018", pendencias: "Sim" },
-            { os: "586950654", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.ABS.FM.GMG1", central: "ABS.FM", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587081977", pendencias: "Sim" },
-            { os: "586950780", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.BG.GMG1", central: "CAS.BG", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/29/2026", osModulo: "587081954", pendencias: "Sim" },
-            { os: "586950667", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.IDU.DP.GMG1", central: "IDU.DP", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/26/2026", osModulo: "587081961", pendencias: "Sim" },
-            { os: "586950596", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.BRU.RE.GMG1", central: "BRU.RE", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/23/2026", osModulo: "587081970", pendencias: "Sim" },
-            { os: "586950633", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.MIA.SR.GMG1", central: "MIA.SR", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/4/2026", osModulo: "587082001", pendencias: "Sim" },
-            { os: "586950598", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.BRU.VA.GMG1", central: "BRU.VA", status: "Em Execução", fase: "FASE 3", servico: "Programação", dataServico: "10/22/2026", osModulo: "587081968", pendencias: "Sim" },
-            { os: "586950594", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.DRA.RB.GMG1", central: "DRA.RB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/6/2026", osModulo: "587081950", pendencias: "Sim" },
-            { os: "586950593", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.ADD.AD.GMG1", central: "ADD.AD", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/10/2026", osModulo: "587081947", pendencias: "Sim" },
-            { os: "587084506", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.AVR.RD.GMG1.USCA1", central: "AVR.RD", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587084513", pendencias: "Sim" },
-            { os: "587084043", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.JOB.NJ.GMG1", central: "JOB.NJ", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587084065", pendencias: "Sim" },
-            { os: "586950645", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.SFL.DZ.GMG1", central: "SFL.DZ", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587082006", pendencias: "Sim" },
-            { os: "587083916", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.BRS.BR.GMG1", central: "BRS.BR", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/5/2026", osModulo: "587083917", pendencias: "Sim" },
-            { os: "587083829", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.VT.GMG1", central: "SRR.VT", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/31/2026", osModulo: "587083832", pendencias: "Sim" },
-            { os: "587189073", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.BRU.VF.GMG1", central: "BRU.VF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/3/2026", osModulo: "587189064", pendencias: "Sim" },
-            { os: "587083918", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.BDO.JM.GMG1", central: "BDO.JM", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/5/2026", osModulo: "587083919", pendencias: "Sim" }
-        ];
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQw6N6CcmNbYYL3A3DqYK4obljiAeoC0DYe9XKlIbLJ1zm_6owe-XCvLXGWxpWUOA/pub?gid=1856434919&single=true&output=csv";
 
+        let dataset = [];
         let trendChartInstance = null;
         let supplierChartInstance = null;
 
+        function loadGoogleSheetsData() {
+            const icon = document.getElementById('syncIcon');
+            if (icon) icon.classList.add('fa-spin');
+            
+            document.getElementById('statusMessage').innerHTML = '<strong>Sincronizando:</strong> Conectando à planilha do Google Sheets...';
+
+            Papa.parse(SHEET_CSV_URL, {
+                download: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (icon) icon.classList.remove('fa-spin');
+                    if (results.data && results.data.length > 1) {
+                        dataset = results.data.slice(1).map(row => ({
+                            os: row[0] || '',
+                            pc: row[1] || '',
+                            fornecedor: row[2] || '',
+                            ddd: row[5] || '',
+                            site: row[6] || '',
+                            central: row[7] || '',
+                            status: row[8] || '',
+                            fase: row[9] || '',
+                            servico: row[11] || '',
+                            dataServico: row[12] || '',
+                            osModulo: row[13] || '',
+                            pendencias: row[23] || row[1] || ''
+                        }));
+
+                        populateDropdowns();
+                        initCharts();
+                        applyFilters();
+
+                        const now = new Date();
+                        document.getElementById('syncTimestamp').textContent = now.toTimeString().split(' ')[0];
+                        document.getElementById('statusMessage').innerHTML = '<strong>Sucesso:</strong> Base de dados publicada e atualizada dinamicamente com a planilha em tempo real.';
+                    }
+                },
+                error: function(err) {
+                    if (icon) icon.classList.remove('fa-spin');
+                    console.error("Erro no PapaParse:", err);
+                    document.getElementById('statusMessage').innerHTML = '<strong>Erro:</strong> Falha ao ler a planilha publicada no Google Sheets.';
+                }
+            });
+        }
+
         function populateDropdowns() {
-            const fornecedores = [...new Set(dataset.map(d => d.fornecedor))].sort();
-            const ddds = [...new Set(dataset.map(d => d.ddd))].sort();
-            const statusList = [...new Set(dataset.map(d => d.status))].sort();
-            const fases = [...new Set(dataset.map(d => d.fase))].sort();
+            const fornecedores = [...new Set(dataset.map(d => d.fornecedor))].filter(Boolean).sort();
+            const ddds = [...new Set(dataset.map(d => d.ddd))].filter(Boolean).sort();
+            const statusList = [...new Set(dataset.map(d => d.status))].filter(Boolean).sort();
+            const fases = [...new Set(dataset.map(d => d.fase))].filter(Boolean).sort();
 
             const selForn = document.getElementById('filterFornecedor');
+            selForn.innerHTML = '<option value="">Todos os Fornecedores</option>';
             fornecedores.forEach(f => selForn.add(new Option(f, f)));
 
             const selDDD = document.getElementById('filterDDD');
+            selDDD.innerHTML = '<option value="">Todos os DDDs</option>';
             ddds.forEach(d => selDDD.add(new Option(d, d)));
 
             const selStatus = document.getElementById('filterStatus');
+            selStatus.innerHTML = '<option value="">Todos os Status</option>';
             statusList.forEach(s => selStatus.add(new Option(s, s)));
 
             const selFase = document.getElementById('filterFase');
+            selFase.innerHTML = '<option value="">Todas as Fases</option>';
             fases.forEach(fa => selFase.add(new Option(fa, fa)));
         }
 
@@ -612,6 +495,8 @@
 
             renderTable(filtered);
             updateKPIs(filtered);
+            updateMarcoTable(filtered);
+            updateSupplierTable(filtered);
             updateSupplierChart(filtered);
         }
 
@@ -663,12 +548,14 @@
 
         function updateKPIs(data) {
             const total = data.length;
-            const executadas = data.filter(d => d.servico === 'Concluido' || d.status === 'Faturado' || d.status.includes('Faturamento')).length;
-            const programadas = data.filter(d => d.servico === 'Programação').length;
-            const aprovacao = data.filter(d => d.status.includes('Pendente') || d.pc === 'PENDENTE').length;
+            const executadas = data.filter(d => d.servico === 'Concluido' || d.status.includes('Faturado') || d.status.includes('Executado')).length;
+            const programadas = data.filter(d => d.servico === 'Programação' || (d.dataServico && d.dataServico.includes('/'))).length;
+            const aprovacao = data.filter(d => d.status.toLowerCase().includes('aprov') || d.pc === 'PENDENTE').length;
             const pendentes = total - executadas - programadas;
 
             document.getElementById('kpiTotal').textContent = total;
+            document.getElementById('kpiTotalFooter').textContent = `${total} USCAs`;
+
             document.getElementById('kpiExecutadas').textContent = executadas;
             document.getElementById('kpiProgramadas').textContent = programadas;
             document.getElementById('kpiPendentes').textContent = pendentes < 0 ? 0 : pendentes;
@@ -685,6 +572,92 @@
             document.getElementById('badgeAprovacao').textContent = `${aprovPct}% do total`;
         }
 
+        function updateMarcoTable(data) {
+            const total = data.length;
+            const exec = data.filter(d => d.servico === 'Concluido' || d.status.includes('Faturado') || d.status.includes('Executado')).length;
+            const ate31 = data.filter(d => d.dataServico && d.dataServico.startsWith('10/')).length;
+            const ate13 = data.filter(d => d.dataServico && d.dataServico.startsWith('11/')).length;
+            const ate15 = Math.max(0, total - (exec + ate31 + ate13));
+
+            const tbody = document.getElementById('marcoTableBody');
+            tbody.innerHTML = `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-2 text-left font-bold text-slate-900">Executado</td>
+                    <td class="p-2">${exec}</td>
+                    <td class="p-2 font-bold">${exec}</td>
+                    <td class="p-2 text-emerald-600 font-bold">${total ? ((exec/total)*100).toFixed(1) : 0}%</td>
+                    <td class="p-2"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">Realizado</span></td>
+                </tr>
+                <tr class="hover:bg-slate-50">
+                    <td class="p-2 text-left font-bold text-slate-900">Até 31/10</td>
+                    <td class="p-2">${ate31}</td>
+                    <td class="p-2 font-bold">${exec + ate31}</td>
+                    <td class="p-2 text-sky-600 font-bold">${total ? (((exec + ate31)/total)*100).toFixed(1) : 0}%</td>
+                    <td class="p-2"><span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
+                </tr>
+                <tr class="hover:bg-purple-50/50 bg-purple-50/30">
+                    <td class="p-2 text-left font-bold text-purple-950">Até 13/11</td>
+                    <td class="p-2">${ate13}</td>
+                    <td class="p-2 font-black text-purple-700">${exec + ate31 + ate13}</td>
+                    <td class="p-2 text-purple-700 font-bold">${total ? (((exec + ate31 + ate13)/total)*100).toFixed(1) : 0}%</td>
+                    <td class="p-2"><span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
+                </tr>
+                <tr class="hover:bg-slate-50">
+                    <td class="p-2 text-left font-bold text-slate-900">Até 15/12</td>
+                    <td class="p-2">${ate15}</td>
+                    <td class="p-2 font-bold">${total}</td>
+                    <td class="p-2 text-amber-600 font-bold">100,0%</td>
+                    <td class="p-2"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">Meta Cond.</span></td>
+                </tr>
+            `;
+        }
+
+        function updateSupplierTable(data) {
+            const suppliers = [...new Set(data.map(d => d.fornecedor))].filter(Boolean).sort();
+            const tbody = document.getElementById('supplierTableBody');
+            tbody.innerHTML = '';
+
+            let totExec = 0, tot31 = 0, tot13 = 0, totSemData = 0, totAprov = 0, totGeral = 0;
+
+            suppliers.forEach(sup => {
+                const supData = data.filter(d => d.fornecedor === sup);
+                const exec = supData.filter(d => d.servico === 'Concluido' || d.status.includes('Faturado')).length;
+                const ate31 = supData.filter(d => d.dataServico && d.dataServico.startsWith('10/')).length;
+                const ate13 = supData.filter(d => d.dataServico && d.dataServico.startsWith('11/')).length;
+                const aprov = supData.filter(d => d.status.toLowerCase().includes('aprov')).length;
+                const semData = supData.filter(d => !d.dataServico || d.dataServico === 'Sem Data' || d.dataServico === 'Aguard. Aprovação').length;
+                const total = supData.length;
+
+                totExec += exec; tot31 += ate31; tot13 += ate13;
+                totSemData += semData; totAprov += aprov; totGeral += total;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50';
+                tr.innerHTML = `
+                    <td class="p-2 text-left font-bold">${sup}</td>
+                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">${exec}</td>
+                    <td class="p-2">${ate31}</td>
+                    <td class="p-2">${ate13}</td>
+                    <td class="p-2">${semData}</td>
+                    <td class="p-2 font-bold text-rose-600 bg-rose-50">${aprov}</td>
+                    <td class="p-2 font-bold">${total}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tbody.innerHTML += `
+                <tr class="bg-slate-100 font-bold text-slate-900 border-t border-slate-200">
+                    <td class="p-2 text-left">TOTAL</td>
+                    <td class="p-2 text-emerald-700">${totExec}</td>
+                    <td class="p-2">${tot31}</td>
+                    <td class="p-2">${tot13}</td>
+                    <td class="p-2 text-amber-600">${totSemData}</td>
+                    <td class="p-2 text-rose-600">${totAprov}</td>
+                    <td class="p-2">${totGeral}</td>
+                </tr>
+            `;
+        }
+
         function clearFilters() {
             document.getElementById('filterFornecedor').value = '';
             document.getElementById('filterDDD').value = '';
@@ -697,6 +670,8 @@
 
         function initCharts() {
             const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInstance) trendChartInstance.destroy();
+
             trendChartInstance = new Chart(ctxTrend, {
                 type: 'line',
                 data: {
@@ -712,17 +687,7 @@
                             pointBackgroundColor: '#0284c7',
                             pointBorderColor: '#ffffff',
                             pointBorderWidth: 2,
-                            pointRadius: 6,
-                            pointHoverRadius: 8
-                        },
-                        {
-                            label: 'Novas Entregas por Marco',
-                            data: [33, 21, 14, 9],
-                            borderColor: '#10b981',
-                            backgroundColor: '#10b981',
-                            type: 'bar',
-                            borderRadius: 4,
-                            barThickness: 24
+                            pointRadius: 6
                         }
                     ]
                 },
@@ -733,29 +698,31 @@
                         legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' } } }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
                     }
                 }
             });
 
             const ctxSupplier = document.getElementById('supplierChart').getContext('2d');
+            if (supplierChartInstance) supplierChartInstance.destroy();
+
             supplierChartInstance = new Chart(ctxSupplier, {
                 type: 'bar',
                 data: {
                     labels: ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'],
                     datasets: [
-                        { label: 'Concluído', data: [10, 11, 3, 8, 1], backgroundColor: '#10b981' },
-                        { label: 'Programado', data: [5, 6, 7, 16, 0], backgroundColor: '#0284c7' },
-                        { label: 'Sem Data / Pendente', data: [0, 1, 8, 0, 0], backgroundColor: '#f97316' }
+                        { label: 'Concluído', data: [0, 0, 0, 0, 0], backgroundColor: '#10b981' },
+                        { label: 'Programado', data: [0, 0, 0, 0, 0], backgroundColor: '#0284c7' },
+                        { label: 'Sem Data / Pendente', data: [0, 0, 0, 0, 0], backgroundColor: '#f97316' }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } },
-                        y: { stacked: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } }
+                        x: { stacked: true, grid: { display: false } },
+                        y: { stacked: true, grid: { color: '#f1f5f9' } }
                     },
                     plugins: {
                         legend: { position: 'top', labels: { font: { size: 10 } } }
@@ -767,14 +734,14 @@
         function updateSupplierChart(filteredData) {
             if (!supplierChartInstance) return;
 
-            const fornecedores = ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'];
+            const fornecedores = [...new Set(filteredData.map(d => d.fornecedor))].filter(Boolean).sort();
             const concluidos = [];
             const programados = [];
             const pendentes = [];
 
             fornecedores.forEach(f => {
                 const items = filteredData.filter(d => d.fornecedor === f);
-                const conc = items.filter(d => d.servico === 'Concluido' || d.status === 'Faturado' || d.status.includes('Faturamento')).length;
+                const conc = items.filter(d => d.servico === 'Concluido' || d.status.includes('Faturado')).length;
                 const prog = items.filter(d => d.servico === 'Programação').length;
                 const pend = items.length - conc - prog;
 
@@ -783,22 +750,11 @@
                 pendentes.push(pend < 0 ? 0 : pend);
             });
 
+            supplierChartInstance.data.labels = fornecedores;
             supplierChartInstance.data.datasets[0].data = concluidos;
             supplierChartInstance.data.datasets[1].data = programados;
             supplierChartInstance.data.datasets[2].data = pendentes;
             supplierChartInstance.update();
-        }
-
-        function triggerSync() {
-            const icon = document.getElementById('syncIcon');
-            icon.classList.add('fa-spin');
-            
-            setTimeout(() => {
-                icon.classList.remove('fa-spin');
-                const now = new Date();
-                const timeStr = now.toTimeString().split(' ')[0];
-                document.getElementById('syncTimestamp').textContent = timeStr;
-            }, 800);
         }
 
         function exportCSV() {
@@ -821,9 +777,7 @@
         }
 
         window.onload = function () {
-            populateDropdowns();
-            initCharts();
-            applyFilters();
+            loadGoogleSheetsData();
         };
     </script>
 </body>
