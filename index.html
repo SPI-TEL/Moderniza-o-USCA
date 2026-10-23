@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETROFIT DE USCAs | SPI • EVOLUÇÃO EXECUTIVA</title>
+    <!-- Chart.js para os Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-main: #0b1120;
+            --bg-card: #1e293b;
+            --bg-header: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #0284c7;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* HEADER */
+        .header {
+            background-color: var(--bg-header);
+            border: 1px solid var(--border-color);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        /* KPI CARDS */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .kpi-card .title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .kpi-card .value {
+            font-size: 1.8rem;
+        }
+
+        .kpi-total .value { color: var(--text-main); }
+        .kpi-concluido { border-left: 5px solid var(--accent-green); }
+        .kpi-concluido .value { color: var(--accent-green); }
+        .kpi-programado { border-left: 5px solid #fdba74; }
+        .kpi-programado .value { color: #fdba74; }
+        .kpi-pendente { border-left: 5px solid var(--accent-yellow); }
+        .kpi-pendente .value { color: var(--accent-yellow); }
+
+        /* TABLES SECTION */
+        .grid-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 10px 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-header);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .badge-realizado { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .badge-programado { background-color: rgba(253, 186, 116, 0.2); color: #fdba74; }
+        .badge-meta { background-color: rgba(234, 179, 8, 0.2); color: #fde047; }
+        .highlight-purple { background-color: rgba(168, 85, 247, 0.3); color: #e9d5ff; font-weight: bold; }
+        .text-danger { color: var(--accent-red); font-weight: bold; }
+
+        .banner-alert {
+            background-color: #7c2d12;
+            color: #ffedd5;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            border-left: 4px solid #f97316;
+        }
+
+        /* CHARTS SECTION */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        /* SEARCH / DETAILED DATA TABLE */
+        .search-bar {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-header);
+            color: var(--text-main);
+            outline: none;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .table-responsive th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>RETROFIT DE USCAs | SPI • EVOLUÇÃO EXECUTIVA</h1>
+        <span style="color: var(--text-muted); font-size: 0.85rem;">Status Atualizado: Outubro/2026</span>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+        <div class="kpi-card kpi-total">
+            <span class="title">TOTAL USCA</span>
+            <span class="value">76</span>
+        </div>
+        <div class="kpi-card kpi-concluido">
+            <span class="title">CONCLUÍDO</span>
+            <span class="value">33</span>
+        </div>
+        <div class="kpi-card kpi-programado">
+            <span class="title">PROGRAMADO</span>
+            <span class="value">35</span>
+        </div>
+        <div class="kpi-card kpi-pendente">
+            <span class="title">PENDENTE</span>
+            <span class="value">8</span>
+        </div>
+    </div>
+
+    <!-- SEÇÃO DE TABELAS -->
+    <div class="grid-two-col">
+        <!-- EVOLUÇÃO ACUMULADA POR MARCO -->
+        <div class="card">
+            <div class="card-title">EVOLUÇÃO ACUMULADA POR MARCO</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Marco</th>
+                        <th>Novas entregas</th>
+                        <th>Acumulado</th>
+                        <th>Avanço %</th>
+                        <th>Situação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Executado</td>
+                        <td>33</td>
+                        <td>33</td>
+                        <td>43,4%</td>
+                        <td><span class="badge badge-realizado">Realizado</span></td>
+                    </tr>
+                    <tr>
+                        <td>Até 31/10</td>
+                        <td>21</td>
+                        <td>53</td>
+                        <td>69,7%</td>
+                        <td><span class="badge badge-programado">Programado</span></td>
+                    </tr>
+                    <tr>
+                        <td>Até 13/11</td>
+                        <td>14</td>
+                        <td class="highlight-purple">67</td>
+                        <td>88,2%</td>
+                        <td><span class="badge badge-programado">Programado</span></td>
+                    </tr>
+                    <tr>
+                        <td>Até 15/12</td>
+                        <td>9</td>
+                        <td>76</td>
+                        <td>100,0%</td>
+                        <td><span class="badge badge-meta">Meta condicionada</span></td>
+                    </tr>
+                    <tr style="font-weight: bold; background-color: var(--bg-header);">
+                        <td>TOTAL</td>
+                        <td>76</td>
+                        <td>76</td>
+                        <td>100,0%</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS -->
+        <div class="card">
+            <div class="card-title">FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fornecedor</th>
+                        <th>Concluído</th>
+                        <th>Até 31/10</th>
+                        <th>Até 13/11</th>
+                        <th>13-30/11</th>
+                        <th>Sem data</th>
+                        <th class="text-danger">Aguard. aprovação</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AC TECH</td>
+                        <td class="highlight-purple">10</td>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="text-danger">0</td>
+                        <td>15</td>
+                    </tr>
+                    <tr>
+                        <td>CICLO</td>
+                        <td class="highlight-purple">11</td>
+                        <td>4</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="text-danger">1</td>
+                        <td>18</td>
+                    </tr>
+                    <tr>
+                        <td>ENERG</td>
+                        <td class="highlight-purple">3</td>
+                        <td>2</td>
+                        <td>5</td>
+                        <td>0</td>
+                        <td>5</td>
+                        <td class="text-danger">3</td>
+                        <td>18</td>
+                    </tr>
+                    <tr>
+                        <td>KILOWATTS</td>
+                        <td class="highlight-purple">8</td>
+                        <td>13</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="text-danger">0</td>
+                        <td>24</td>
+                    </tr>
+                    <tr>
+                        <td>SISTEL</td>
+                        <td class="highlight-purple">1</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="text-danger">0</td>
+                        <td>1</td>
+                    </tr>
+                    <tr style="font-weight: bold; background-color: var(--bg-header);">
+                        <td>TOTAL</td>
+                        <td class="highlight-purple">33</td>
+                        <td>21</td>
+                        <td>14</td>
+                        <td>0</td>
+                        <td>5</td>
+                        <td class="text-danger">4</td>
+                        <td>76</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="banner-alert">
+                <strong>ATENÇÃO:</strong> 5 USCAs sem data + 4 aguardando aprovação. A entrega até 15/12 depende de regularização e programação.
+            </div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO DE GRÁFICOS -->
+    <div class="charts-grid">
+        <div class="card">
+            <div class="card-title">Distribuição de Status por Fornecedor</div>
+            <div class="chart-container">
+                <canvas id="supplierChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Curva de Avanço Acumulado (USCAs)</div>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- DADOS DETALHADOS DA PLANILHA -->
+    <div class="card">
+        <div class="card-title">BASE DE DADOS COMPLETA DO RETROFIT</div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Buscar por Site, OS, Fornecedor, DDD ou Status...">
+        </div>
+        <div class="table-responsive">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>OS Retrofit</th>
+                        <th>Pc</th>
+                        <th>Fornecedor</th>
+                        <th>DDD</th>
+                        <th>Site</th>
+                        <th>Central</th>
+                        <th>Status OS</th>
+                        <th>Fase</th>
+                        <th>Serviço</th>
+                        <th>Data Serviço</th>
+                        <th>OS Módulo / Sensor</th>
+                        <th>Pendências</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Gerado via JavaScript dinamicamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 1. DADOS BRUTOS EXTRAÍDOS DA PLANILHA
+    const rawData = [
+        ["586950581","PENDENTE","CICLO","DDD12","F.SP.CGT.MG.GMG1","CGT.MG","Pendente Aprov. Orçamento Corrigido","FASE 2","Aguard. Aprovação","Aguard. Aprovação","587080766","PENDENTE"],
+        ["587239803","PENDENTE","ENERG","DDD18","F.SP.RAC.HD.GMG1","RAC.HD","Pendente Gerente Aprov. Orçamento","FASE 2","Aguard. Aprovação","Aguard. Aprovação","587239808","PENDENTE"],
+        ["587239783","PENDENTE","ENERG","PAA","F.SP.PAA.VR.GMG1","PAA.VR","Pendente Gerente de Divisão Aprov. Orçamento","FASE 3","Aguard. Aprovação","Aguard. Aprovação","587239799","PENDENTE"],
+        ["587257353","PENDENTE","ENERG","CAS","F.SP.IDU.MR","IDU.MR","Pendente Gerente de Divisão Aprov. Orçamento","FASE 3","Aguard. Aprovação","Aguard. Aprovação","587257366","PENDENTE"],
+        ["586817249","SIM","AC TECH","DDD17","F.SP.SRR.MC","SRR.MC","OS em Processo de Faturamento","FASE 1","Concluido","Concluido","587015225","Sim"],
+        ["586886737","SIM","KILOWATTS","DDD16","F.SP.RPO.GC","RPO.GC","OS em Processo de Faturamento","FASE 1","Concluido","Concluido","587015228","Sim"],
+        ["586886703","SIM","KILOWATTS","PAA","F.SP.CDP.GK","CDP.GK","Serviço Executado","FASE 1","Concluido","Concluido","587015227","Sim"],
+        ["586886700","SIM","KILOWATTS","DDD18","F.SP.ARC.XN","ARC.XN","Serviço Executado","FASE 1","Concluido","Concluido","587015226","Sim"],
+        ["586817232","SIM","AC TECH","CAS","F.SP.CAS.CL","CAS.CL","Serviço Executado","FASE 1","Concluido","Concluido","587015196","Sim"],
+        ["586817250","SIM","CICLO","DDD12","F.SP.UTB.LZ","UTB.LZ","Faturado","FASE 1","Concluido","Concluido","587015185","Sim"],
+        ["586817243","SIM","AC TECH","CAS","F.SP.CAS.NA","CAS.NA","Serviço Executado","FASE 1","Concluido","Concluido","587015206","Sim"],
+        ["586817236","SIM","CICLO","DDD12","F.SP.SJC.JS","SJC.JS","Faturado","FASE 1","Concluido","Concluido","587015164","Sim"],
+        ["586817248","SIM","AC TECH","CAS","F.SP.CAS.AM","CAS.AM","Faturado","FASE 1","Concluido","Concluido","587015193","Sim"],
+        ["586817238","SIM","CICLO","DDD12","F.SP.SJC.TT","SJC.TT","Faturado","FASE 1","Concluido","Concluido","587015176","Sim"],
+        ["586872106","SIM","CICLO","DDD12","F.SP.CPJ.ER","CPJ.ER","Faturado","FASE 1","Concluido","Concluido","587015184","Sim"],
+        ["586817240","SIM","AC TECH","DDD14","F.SP.ORN.MP","ORN.MP","Faturado","FASE 1","Concluido","Concluido","587015191","Sim"],
+        ["586817246","SIM","AC TECH","DDD14","F.SP.BRU.CE","BRU.CE","Faturado","FASE 1","Concluido","Concluido","587015189","Sim"],
+        ["586817242","SIM","AC TECH","DDD14","F.SP.BRU.AC","BRU.AC","Faturado","FASE 1","Concluido","Concluido","N.a","N.A"],
+        ["586950583","SIM","CICLO","DDD12","F.SP.TTE.IN.GMG1","TTE.IN","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587080771","Sim"],
+        ["586950585","SIM","CICLO","DDD12","F.SP.TTE.SJ.GMG1","TTE.SJ","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587080776","Sim"],
+        ["586948721","SIM","AC TECH","DDD17","F.SP.SRR.MC.GMG2","SRR.MC","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587067825","Sim"],
+        ["586950836","SIM","ENERG","DDD17","F.SP.SRR.VS.GMG2","SRR.VS","Encaminhada ao Campo","FASE 2","Concluido","Concluido","587067826","Sim"],
+        ["586950671","SIM","CICLO","CAS","F.SP.CAS.OV.GMG1","CAS.OV","Serviço Executado","FASE 2","Concluido","Concluido","587073865","Sim"],
+        ["586950660","SIM","KILOWATTS","CAS","F.SP.PDA.AP.GMG1","PDA.AP","Serviço Executado","FASE 2","Concluido","Concluido","587073869","Sim"],
+        ["587063861","SIM","KILOWATTS","DDD16","F.SP.RPO.LG.GMG1","RPO.LG","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587067673","Sim"],
+        ["586950607","SIM","SISTEL","DDD14","F.SP.MIA.JA.GMG1","MIA.JA","Serviço Executado","FASE 2","Concluido","Concluido","587015229","Sim"],
+        ["586887613","SIM","AC TECH","DDD14","F.SP.BRU.AC.GMG2.USCA1","BRU.AC","Vistoria Aprovada","FASE 2","Concluido","Concluido","587067799","Sim"],
+        ["586950649","SIM","KILOWATTS","DDD16","F.SP.RPO.OE.GMG1","RPO.OE","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587015232","Sim"],
+        ["586950612","SIM","ENERG","DDD14","F.SP.MIA.JA.GMG2","MIA.JA","Serviço Executado","FASE 2","Concluido","Concluido","587067823","Sim"],
+        ["586950635","SIM","AC TECH","DDD17","F.SP.SRR.VS.GMG3","SRR.VS","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587067830","Sim"],
+        ["586950658","SIM","CICLO","CAS","F.SP.CAS.CB.GMG3","CAS.CB","Vistoria Aprovada","FASE 2","Concluido","Concluido","587067832","Sim"],
+        ["586950657","SIM","CICLO","CAS","F.SP.CAS.CB.GMG1","CAS.CB","Vistoria Aprovada","FASE 2","Concluido","Concluido","587015234","Sim"],
+        ["586950688","SIM","KILOWATTS","DDD16","F.SP.RPO.QF.GMG1","RPO.QF","OS em Processo de Faturamento","FASE 3","Concluido","Concluido","587082003","Sim"],
+        ["586950606","SIM","ENERG","DDD14","F.SP.AVR.SC.GMG1","AVR.SC","Execução Concluída / Pendente Aprov. Supv","FASE 3","Concluido","Concluido","587081972","Sim"],
+        ["586950689","SIM","KILOWATTS","DDD16","F.SP.SRA.AC.GMG1","SRA.AC","Encaminhada ao Campo","FASE 4","Concluido","Concluido","587082002","Sim"],
+        ["586950576","SIM","CICLO","DDD12","F.SP.GTA.NG.GMG1","GTA.NG","Serviço Executado","FASE 2","Concluido","10/20/2026","587080768","Sim"],
+        ["586950566","SIM","CICLO","DDD12","F.SP.JCI.JM.GMG1","JCI.JM","Serviço Executado","FASE 2","Concluido","Concluido","587080770","Sim"],
+        ["586950630","SIM","CICLO","DDD14","F.SP.MIA.JA.GMG3","MIA.JA","Encaminhada ao Campo","FASE 2","Programação","11/5/2026","587067824","Sim"],
+        ["586951194","SIM","KILOWATTS","DDD15","F.SP.SOC.CR.GMG1","SOC.CR","Execução Incompleta","FASE 2","Programação","10/22/2026","587082026","Sim"],
+        ["586951204","SIM","KILOWATTS","DDD15","F.SP.SOC.CR.GMG2","SOC.CR","Execução Incompleta","FASE 2","Programação","10/22/2026","587082023","Sim"],
+        ["586950840","SIM","KILOWATTS","DDD17","F.SP.SRR.VS.GMG3","SRR.VS","Encaminhada ao Campo","FASE 2","Programação","10/31/2026","587067830","Sim"],
+        ["586950677","SIM","AC TECH","CAS","F.SP.MOR.JP.GMG1","MOR.JP","Encaminhada ao Campo","FASE 2","Programação","11/3/2026","587073867","Sim"],
+        ["586950721","SIM","AC TECH","CAS","F.SP.SNG.SM.GMG1","SNG.SM","Encaminhada ao Campo","FASE 2","Programação","11/5/2026","587073870","Sim"],
+        ["587083792","SIM","KILOWATTS","DDD17","F.SP.SRR.RD.GMG1","SRR.RD","Encaminhada ao Campo","FASE 2","Programação","10/31/2026","587083822","Sim"],
+        ["586950675","SIM","ENERG","CAS","F.SP.MGU.HC.GMG1","MGU.HC","Encaminhada ao Campo","FASE 2","Sem Data","Sem Data","587081998","Sim"],
+        ["586950639","SIM","KILOWATTS","DDD17","F.SP.SRR.EL.GMG1","SRR.EL","Encaminhada ao Campo","FASE 2","Programação","10/31/2026","587082008","Sim"],
+        ["586950587","SIM","CICLO","DDD18","F.SP.PPE.BG.GMG1","PPE.BG","Encaminhada ao Campo","FASE 2","Programação","10/28/2026","587081997","Sim"],
+        ["586950663","SIM","AC TECH","CAS","F.SP.CAS.VC.GMG1","CAS.VC","Encaminhada ao Campo","FASE 2","Programação","11/9/2026","587081958","Sim"],
+        ["586950699","SIM","ENERG","CAS","F.SP.CAS.BE.GMG1","CAS.BE","Encaminhada ao Campo","FASE 2","Programação","11/12/2026","587081963","Sim"],
+        ["586950641","SIM","KILOWATTS","DDD17","F.SP.FND.GS.GMG1","FND.GS","Encaminhada ao Campo","FASE 2","Programação","11/5/2026","587082007","Sim"],
+        ["587192142","SIM","ENERG","DDD18","F.SP.ADT.EC.GMG1","ADT.EC","Encaminhada ao Campo","FASE 2","Programação","11/13/2026","587081974","Sim"],
+        ["586950697","SIM","ENERG","CAS","F.SP.LOU.SA.GMG1","LOU.SA","Encaminhada ao Campo","FASE 2","Sem Data","Sem Data","587081940","Sim"],
+        ["587169916","SIM","CICLO","DDD12","F.SP.UTB.PG","UTB.PG","Encaminhada ao Campo","FASE 2","Programação","10/23/2026","587248537","Sim"],
+        ["586950590","SIM","ENERG","DDD18","F.SP.PPE.SG.GMG1","PPE.SG","Encaminhada ao Campo","FASE 2","Programação","11/5/2026","587081995","Sim"],
+        ["586950601","SIM","CICLO","DDD14","F.SP.TUP.RC.GMG1","TUP.RC","Encaminhada ao Campo","FASE 3","Programação","10/30/2026","587081969","Sim"],
+        ["586951209","SIM","KILOWATTS","DDD15","F.SP.BTV.AB.GMG1","BTV.AB","Encaminhada ao Campo","FASE 3","Programação","10/28/2026","587082017","Sim"],
+        ["586951213","SIM","KILOWATTS","DDD15","F.SP.CQO.RF.GMG1","CQO.RF","Encaminhada ao Campo","FASE 3","Programação","10/28/2026","587082011","Sim"],
+        ["586951211","SIM","KILOWATTS","DDD15","F.SP.IGA.QB.GMG1","IGA.QB","Encaminhada ao Campo","FASE 3","Programação","10/28/2026","587082013","Sim"],
+        ["586951210","SIM","KILOWATTS","DDD15","F.SP.PRF.PF.GMG1","PRF.PF","Encaminhada ao Campo","FASE 3","Programação","10/24/2026","587082015","Sim"],
+        ["586951205","SIM","KILOWATTS","DDD15","F.SP.SOC.AP.GMG1","SOC.AP","Encaminhada ao Campo","FASE 3","Programação","10/22/2026","587082020","Sim"],
+        ["586951208","SIM","KILOWATTS","DDD15","F.SP.TIE.TT.GMG1","TIE.TT","Encaminhada ao Campo","FASE 3","Programação","10/24/2026","587082018","Sim"],
+        ["586950654","SIM","KILOWATTS","DDD16","F.SP.ABS.FM.GMG1","ABS.FM","Encaminhada ao Campo","FASE 3","Programação","10/28/2026","587081977","Sim"],
+        ["586950780","SIM","AC TECH","CAS","F.SP.CAS.BG.GMG1","CAS.BG","Encaminhada ao Campo","FASE 3","Programação","10/29/2026","587081954","Sim"],
+        ["586950667","SIM","AC TECH","CAS","F.SP.IDU.DP.GMG1","IDU.DP","Encaminhada ao Campo","FASE 3","Programação","10/26/2026","587081961","Sim"],
+        ["586950596","SIM","ENERG","DDD14","F.SP.BRU.RE.GMG1","BRU.RE","Encaminhada ao Campo","FASE 3","Programação","10/23/2026","587081970","Sim"],
+        ["586950633","SIM","CICLO","DDD14","F.SP.MIA.SR.GMG1","MIA.SR","Encaminhada ao Campo","FASE 3","Programação","11/4/2026","587082001","Sim"],
+        ["586950598","SIM","ENERG","DDD14","F.SP.BRU.VA.GMG1","BRU.VA","Em Execução","FASE 3","Programação","10/22/2026","587081968","Sim"],
+        ["586950594","SIM","ENERG","DDD18","F.SP.DRA.RB.GMG1","DRA.RB","Encaminhada ao Campo","FASE 3","Programação","11/6/2026","587081950","Sim"],
+        ["586950593","SIM","ENERG","DDD18","F.SP.ADD.AD.GMG1","ADD.AD","Encaminhada ao Campo","FASE 3","Programação","11/10/2026","587081947","Sim"],
+        ["587084506","SIM","ENERG","DDD14","F.SP.AVR.RD.GMG1.USCA1","AVR.RD","Encaminhada ao Campo","FASE 4","Sem Data","Sem Data","587084513","Sim"],
+        ["587084043","SIM","ENERG","DDD17","F.SP.JOB.NJ.GMG1","JOB.NJ","Encaminhada ao Campo","FASE 4","Sem Data","Sem Data","587084065","Sim"],
+        ["586950645","SIM","ENERG","DDD17","F.SP.SFL.DZ.GMG1","SFL.DZ","Encaminhada ao Campo","FASE 4","Sem Data","Sem Data","587082006","Sim"],
+        ["587083916","SIM","KILOWATTS","DDD17","F.SP.BRS.BR.GMG1","BRS.BR","Encaminhada ao Campo","FASE 3","Programação","11/5/2026","587083917","Sim"],
+        ["587083829","SIM","KILOWATTS","DDD17","F.SP.SRR.VT.GMG1","SRR.VT","Encaminhada ao Campo","FASE 3","Programação","10/31/2026","587083832","Sim"],
+        ["587189073","SIM","CICLO","DDD14","F.SP.BRU.VF.GMG1","BRU.VF","Encaminhada ao Campo","FASE 3","Programação","11/3/2026","587189064","Sim"],
+        ["587083918","SIM","KILOWATTS","DDD17","F.SP.BDO.JM.GMG1","BDO.JM","Encaminhada ao Campo","FASE 3","Programação","11/5/2026","587083919","Sim"]
+    ];
+
+    // POPULAR TABELA DE DADOS
+    function populateTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        rawData.forEach(row => {
+            const tr = document.createElement('tr');
+            row.forEach((cell, idx) => {
+                const td = document.createElement('td');
+                td.textContent = cell;
+                
+                // Colorir os Status e Pendências
+                if (idx === 1 || idx === 11) {
+                    if (cell === 'PENDENTE') td.className = 'text-danger';
+                }
+                if (idx === 8 && cell === 'Concluido') {
+                    td.style.color = '#4ade80';
+                    td.style.fontWeight = 'bold';
+                }
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    }
+
+    // FILTRO DE BUSCA
+    function filterTable() {
+        const input = document.getElementById("searchInput").value.toUpperCase();
+        const trs = document.getElementById("dataTable").getElementsByTagName("tr");
+        for (let i = 1; i < trs.length; i++) {
+            let show = false;
+            const tds = trs[i].getElementsByTagName("td");
+            for (let j = 0; j < tds.length; j++) {
+                if (tds[j] && tds[j].textContent.toUpperCase().indexOf(input) > -1) {
+                    show = true;
+                    break;
+                }
+            }
+            trs[i].style.display = show ? "" : "none";
+        }
+    }
+
+    // INICIALIZAR GRÁFICOS (CHART.JS)
+    function initCharts() {
+        // Gráfico 1: Fornecedores
+        const ctxSupplier = document.getElementById('supplierChart').getContext('2d');
+        new Chart(ctxSupplier, {
+            type: 'bar',
+            data: {
+                labels: ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'],
+                datasets: [
+                    {
+                        label: 'Concluído',
+                        data: [10, 11, 3, 8, 1],
+                        backgroundColor: '#f97316'
+                    },
+                    {
+                        label: 'Até 31/10',
+                        data: [2, 4, 2, 13, 0],
+                        backgroundColor: '#38bdf8'
+                    },
+                    {
+                        label: 'Sem data / Pendente',
+                        data: [0, 1, 8, 0, 0],
+                        backgroundColor: '#78350f'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    y: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#f8fafc' } }
+                }
+            }
+        });
+
+        // Gráfico 2: Curva de Avanço Acumulado
+        const ctxTrend = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctxTrend, {
+            type: 'line',
+            data: {
+                labels: ['Executado', 'Até 31/10', 'Até 13/11', 'Até 15/12'],
+                datasets: [{
+                    label: 'USCAs Acumuladas',
+                    data: [33, 53, 67, 76],
+                    borderColor: '#0284c7',
+                    backgroundColor: 'rgba(2, 132, 199, 0.2)',
+                    fill: true,
+                    tension: 0.2,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#0284c7'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' }, min: 0, max: 80 }
+                },
+                plugins: {
+                    legend: { labels: { color: '#f8fafc' } }
+                }
+            }
+        });
+    }
+
+    window.onload = () => {
+        populateTable();
+        initCharts();
+    };
+</script>
+
+</body>
+</html>
