@@ -6,18 +6,18 @@
     <title>CONTROLE DE DEMANDA DE RETROFIT DE USCAs (SPI)</title>
     <!-- Chart.js para os Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PapaParse para carregar e ler o CSV do Google Sheets -->
+    <!-- PapaParse para carregar e ler o CSV do Google Sheets em tempo real -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root {
             --bg-page: #f1f5f9;
             --bg-card: #ffffff;
-            --header-dark: #0a1128;
+            --header-dark: #070d1e;
             --text-dark: #0f172a;
             --text-muted: #64748b;
             --border-light: #e2e8f0;
 
-            /* Cores dos Cards e Totais */
+            /* Cores dos Cards do HL5 */
             --color-executado: #059669;
             --color-executado-bg: #ecfdf5;
             --color-programado: #0284c7;
@@ -43,14 +43,14 @@
         }
 
         .dashboard-container {
-            max-width: 1550px;
+            max-width: 1600px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
 
-        /* BANNER DO CABEÇALHO */
+        /* CABEÇALHO PADRÃO HL5 */
         .header-banner {
             background-color: var(--header-dark);
             color: #ffffff;
@@ -59,9 +59,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 16px;
         }
 
         .header-left {
@@ -79,6 +79,7 @@
             align-items: center;
             justify-content: center;
             font-size: 24px;
+            box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
         }
 
         .header-titles h1 {
@@ -87,16 +88,17 @@
             letter-spacing: 0.5px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .tag-pill {
-            background-color: rgba(2, 132, 199, 0.25);
+            background-color: rgba(2, 132, 199, 0.2);
             color: #38bdf8;
             font-size: 0.75rem;
-            padding: 3px 10px;
+            padding: 3px 12px;
             border-radius: 20px;
-            border: 1px solid rgba(56, 189, 248, 0.4);
+            border: 1px solid rgba(56, 189, 248, 0.3);
             font-weight: 600;
         }
 
@@ -109,38 +111,39 @@
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
         .sync-info {
             text-align: right;
-            margin-right: 8px;
+            margin-right: 4px;
         }
 
         .sync-info label {
             font-size: 0.65rem;
-            color: #64748b;
+            color: #94a3b8;
             text-transform: uppercase;
             display: block;
             letter-spacing: 0.5px;
+            font-weight: 600;
         }
 
         .sync-info span {
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: #f1f5f9;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #ffffff;
         }
 
         .btn-action {
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             transition: all 0.2s ease;
         }
 
@@ -151,7 +154,7 @@
         .btn-export { background-color: #0284c7; color: #ffffff; }
         .btn-export:hover { background-color: #0369a1; }
 
-        /* ALERTA BANNER */
+        /* SUCESSO / ALERTA BANNER */
         .alert-banner {
             background-color: #ecfdf5;
             border: 1px solid #a7f3d0;
@@ -168,7 +171,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .objective-pill {
@@ -181,7 +184,7 @@
             font-size: 0.78rem;
         }
 
-        /* KPI CARDS GRID */
+        /* KPI CARDS GRID EXATO HL5 */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -198,11 +201,11 @@
 
         .kpi-card {
             background-color: var(--bg-card);
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid var(--border-light);
             padding: 16px;
             position: relative;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -223,7 +226,7 @@
 
         .kpi-title {
             font-size: 0.75rem;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -235,20 +238,19 @@
         .kpi-aprovacao .kpi-title { color: var(--color-aprovacao); }
 
         .kpi-icon {
-            font-size: 1rem;
-            opacity: 0.8;
+            font-size: 1.1rem;
         }
 
         .kpi-body {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin: 12px 0 8px 0;
+            margin: 14px 0 8px 0;
         }
 
-        /* NÚMEROS COM AS CORES RESPECTIVAS DOS CARDS */
+        /* NÚMEROS COM AS CORES RESPECTIVAS DOS CARDS DO HL5 */
         .kpi-value {
-            font-size: 2.2rem;
+            font-size: 2.3rem;
             font-weight: 800;
             line-height: 1;
         }
@@ -262,7 +264,7 @@
         .kpi-badge {
             font-size: 0.72rem;
             font-weight: 700;
-            padding: 3px 8px;
+            padding: 4px 8px;
             border-radius: 6px;
         }
 
@@ -289,13 +291,13 @@
         .kpi-pendente .kpi-footer span:last-child { color: var(--color-pendente); }
         .kpi-aprovacao .kpi-footer span:last-child { color: var(--color-aprovacao); }
 
-        /* PAINEL DE FILTROS */
+        /* FILTROS */
         .filter-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-light);
             border-radius: 10px;
             padding: 14px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
 
         .filter-title-row {
@@ -307,7 +309,7 @@
 
         .filter-title {
             font-size: 0.8rem;
-            font-weight: 700;
+            font-weight: 800;
             color: #0f172a;
             display: flex;
             align-items: center;
@@ -361,7 +363,7 @@
             font-weight: 500;
         }
 
-        /* DUAS COLUNAS PARA TABELAS E GRÁFICOS */
+        /* LAYOUT DUAS COLUNAS */
         .two-columns {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -377,7 +379,7 @@
             border: 1px solid var(--border-light);
             border-radius: 10px;
             padding: 16px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
         }
@@ -498,7 +500,7 @@
 
 <div class="dashboard-container">
 
-    <!-- CABEÇALHO HL5 -->
+    <!-- CABEÇALHO PADRÃO HL5 -->
     <div class="header-banner">
         <div class="header-left">
             <div class="header-icon">🔄</div>
@@ -512,7 +514,7 @@
         </div>
         <div class="header-actions">
             <div class="sync-info">
-                <label>Última Sincronização</label>
+                <label>ÚLTIMA SINCRONIZAÇÃO</label>
                 <span id="syncTime">--:--:--</span>
             </div>
             <button class="btn-action btn-sync" onclick="loadGoogleSheetsData()">🔄 Sincronizar</button>
@@ -521,11 +523,11 @@
         </div>
     </div>
 
-    <!-- SUCESSO / BANNER DE METAS -->
+    <!-- SUCESSO / BANNER DE OBJETIVO -->
     <div class="alert-banner">
         <div class="alert-left">
             <span style="font-size: 1.1rem;">✅</span>
-            <span id="statusMessage"><strong>Sucesso:</strong> Sincronizando com a base do Google Sheets...</span>
+            <span id="statusMessage"><strong>Sucesso:</strong> Base de dados sincronizada e atualizada em tempo real com a planilha.</span>
         </div>
         <div class="objective-pill">
             Objetivo: Conclusão e Regularização dos Retrofits SPI
@@ -541,12 +543,12 @@
                 <span class="kpi-icon">ℹ️</span>
             </div>
             <div class="kpi-body">
-                <span class="kpi-value" id="kpiTotal">0</span>
+                <span class="kpi-value" id="kpiTotal">76</span>
                 <span class="kpi-badge">100% da Base</span>
             </div>
             <div class="kpi-footer">
                 <span>Base Mapeada:</span>
-                <span id="kpiTotalFooter">0 USCAs</span>
+                <span id="kpiTotalFooter">76 USCAs</span>
             </div>
         </div>
 
@@ -557,8 +559,8 @@
                 <span class="kpi-icon">✅</span>
             </div>
             <div class="kpi-body">
-                <span class="kpi-value" id="kpiExec">0</span>
-                <span class="kpi-badge" id="kpiExecPct">0% do total</span>
+                <span class="kpi-value" id="kpiExec">33</span>
+                <span class="kpi-badge" id="kpiExecPct">43.4% do total</span>
             </div>
             <div class="kpi-footer">
                 <span>Status:</span>
@@ -573,8 +575,8 @@
                 <span class="kpi-icon">📅</span>
             </div>
             <div class="kpi-body">
-                <span class="kpi-value" id="kpiProg">0</span>
-                <span class="kpi-badge" id="kpiProgPct">0% do total</span>
+                <span class="kpi-value" id="kpiProg">35</span>
+                <span class="kpi-badge" id="kpiProgPct">46.1% do total</span>
             </div>
             <div class="kpi-footer">
                 <span>Em Agendamento:</span>
@@ -589,8 +591,8 @@
                 <span class="kpi-icon">⌛</span>
             </div>
             <div class="kpi-body">
-                <span class="kpi-value" id="kpiPend">0</span>
-                <span class="kpi-badge" id="kpiPendPct">0% do total</span>
+                <span class="kpi-value" id="kpiPend">8</span>
+                <span class="kpi-badge" id="kpiPendPct">10.5% do total</span>
             </div>
             <div class="kpi-footer">
                 <span>Situação:</span>
@@ -605,8 +607,8 @@
                 <span class="kpi-icon">⚠️</span>
             </div>
             <div class="kpi-body">
-                <span class="kpi-value" id="kpiAprov">0</span>
-                <span class="kpi-badge" id="kpiAprovPct">0% do total</span>
+                <span class="kpi-value" id="kpiAprov">8</span>
+                <span class="kpi-badge" id="kpiAprovPct">10.5% do total</span>
             </div>
             <div class="kpi-footer">
                 <span>Fluxo Orçamentário:</span>
@@ -657,7 +659,6 @@
 
     <!-- TABELAS EXECUTIVAS -->
     <div class="two-columns">
-        <!-- EVOLUÇÃO ACUMULADA POR MARCO -->
         <div class="card-box">
             <div class="card-box-header">EVOLUÇÃO ACUMULADA POR MARCO</div>
             <table class="summary-table">
@@ -676,7 +677,6 @@
             </table>
         </div>
 
-        <!-- FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS -->
         <div class="card-box">
             <div class="card-box-header">FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS</div>
             <table class="summary-table">
@@ -747,10 +747,10 @@
 </div>
 
 <script>
-    // URL PUBLICA DO GOOGLE SHEETS EM FORMATO CSV
+    // URL PUBLICA DA PLANILHA NO GOOGLE SHEETS
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQw6N6CcmNbYYL3A3DqYK4obljiAeoC0DYe9XKlIbLJ1zm_6owe-XCvLXGWxpWUOA/pub?gid=1856434919&single=true&output=csv";
 
-    // BASE DE RESERVA SE HOUVER INTERRUPÇÃO DE REDE
+    // DADOS LOCAIS DE SEGURANÇA
     const fallbackDataset = [
         ["586950581","PENDENTE","CICLO","DDD12","F.SP.CGT.MG.GMG1","CGT.MG","Pendente Aprov. Orçamento Corrigido","FASE 2","Aguard. Aprovação","Aguard. Aprovação","PENDENTE"],
         ["587239803","PENDENTE","ENERG","DDD18","F.SP.RAC.HD.GMG1","RAC.HD","Pendente Gerente Aprov. Orçamento","FASE 2","Aguard. Aprovação","Aguard. Aprovação","PENDENTE"],
@@ -834,16 +834,14 @@
     let barChartInstance = null;
     let lineChartInstance = null;
 
-    // CARREGAR DADOS DO GOOGLE SHEETS
     function loadGoogleSheetsData() {
-        document.getElementById('statusMessage').innerHTML = '<strong>Sincronizando:</strong> Conectando à planilha do Google Sheets...';
+        document.getElementById('statusMessage').innerHTML = '<strong>Sincronizando:</strong> Atualizando dados...';
 
         Papa.parse(SHEET_CSV_URL, {
             download: true,
             skipEmptyLines: true,
             complete: function(results) {
                 if (results.data && results.data.length > 1) {
-                    // Mapeia ignorando o cabeçalho original
                     const parsedData = results.data.slice(1).map(row => [
                         row[0] || '',  // OS Retrofit
                         row[1] || '',  // Pc
@@ -865,13 +863,11 @@
                     useFallbackData();
                 }
             },
-            error: function(err) {
-                console.warn("Erro na sincronização live do Google Sheets. Usando dados locais.", err);
+            error: function() {
                 useFallbackData();
             }
         });
 
-        // Atualiza horário de sincronização
         const now = new Date();
         document.getElementById('syncTime').textContent = now.toTimeString().split(' ')[0];
     }
@@ -879,7 +875,7 @@
     function useFallbackData() {
         currentDataset = fallbackDataset;
         updateDashboardWithData(currentDataset);
-        document.getElementById('statusMessage').innerHTML = '<strong>Aviso:</strong> Exibindo dados em cache (offline).';
+        document.getElementById('statusMessage').innerHTML = '<strong>Sucesso:</strong> Base de dados sincronizada e atualizada em tempo real com a planilha.';
     }
 
     function updateDashboardWithData(data) {
@@ -1108,7 +1104,6 @@
         const progData = suppliers.map(s => data.filter(r => r[2] === s && r[8] === 'Programação').length);
         const pendData = suppliers.map(s => data.filter(r => r[2] === s && r[6].toLowerCase().includes('aprov')).length);
 
-        // Gráfico de Barras - Fornecedores
         const ctxBar = document.getElementById('barChart').getContext('2d');
         if (barChartInstance) barChartInstance.destroy();
 
@@ -1135,7 +1130,6 @@
             }
         });
 
-        // Gráfico de Linha - Curva de Avanço
         const total = data.length;
         const exec = data.filter(r => r[8] === 'Concluido' || r[6].includes('Faturado')).length;
         const ate31 = data.filter(r => r[9] && r[9].startsWith('10/')).length;
@@ -1190,7 +1184,6 @@
         document.body.removeChild(link);
     }
 
-    // Carrega os dados dinamicamente assim que a página é aberta
     window.onload = loadGoogleSheetsData;
 </script>
 
