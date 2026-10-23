@@ -3,638 +3,811 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RETROFIT DE USCAs | SPI • EVOLUÇÃO EXECUTIVA</title>
-    <!-- Chart.js para os Gráficos -->
+    <title>CONTROLE DE DEMANDA DE RETROFIT DE USCAs (SPI)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            800: '#0f172a',
+                            900: '#0b1727',
+                            950: '#080f1a'
+                        },
+                        brand: {
+                            blue: '#0284c7',
+                            cyan: '#06b6d4',
+                            green: '#10b981',
+                            orange: '#f97316',
+                            purple: '#a855f7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-main: #0b1120;
-            --bg-card: #1e293b;
-            --bg-header: #0f172a;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-blue: #0284c7;
-            --accent-green: #22c55e;
-            --accent-yellow: #eab308;
-            --accent-red: #ef4444;
-            --accent-purple: #a855f7;
-            --border-color: #334155;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
         body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f1f5f9;
         }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-        /* HEADER */
-        .header {
-            background-color: var(--bg-header);
-            border: 1px solid var(--border-color);
-            padding: 15px 25px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
         }
-
-        .header h1 {
-            font-size: 1.5rem;
-            letter-spacing: 1px;
-            color: var(--text-main);
-            text-transform: uppercase;
-        }
-
-        /* KPI CARDS */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .kpi-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-        }
-
-        .kpi-card .title {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .kpi-card .value {
-            font-size: 1.8rem;
-        }
-
-        .kpi-total .value { color: var(--text-main); }
-        .kpi-concluido { border-left: 5px solid var(--accent-green); }
-        .kpi-concluido .value { color: var(--accent-green); }
-        .kpi-programado { border-left: 5px solid #fdba74; }
-        .kpi-programado .value { color: #fdba74; }
-        .kpi-pendente { border-left: 5px solid var(--accent-yellow); }
-        .kpi-pendente .value { color: var(--accent-yellow); }
-
-        /* TABLES SECTION */
-        .grid-two-col {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 1024px) {
-            .grid-two-col {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 20px;
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid var(--accent-blue);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-            text-align: center;
-        }
-
-        th, td {
-            padding: 10px 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        th {
-            background-color: var(--bg-header);
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        tr:nth-child(even) {
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-
-        .badge {
-            padding: 4px 8px;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
             border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            display: inline-block;
         }
-
-        .badge-realizado { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; }
-        .badge-programado { background-color: rgba(253, 186, 116, 0.2); color: #fdba74; }
-        .badge-meta { background-color: rgba(234, 179, 8, 0.2); color: #fde047; }
-        .highlight-purple { background-color: rgba(168, 85, 247, 0.3); color: #e9d5ff; font-weight: bold; }
-        .text-danger { color: var(--accent-red); font-weight: bold; }
-
-        .banner-alert {
-            background-color: #7c2d12;
-            color: #ffedd5;
-            padding: 12px 15px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            margin-top: 15px;
-            border-left: 4px solid #f97316;
-        }
-
-        /* CHARTS SECTION */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 900px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .chart-container {
-            position: relative;
-            height: 280px;
-        }
-
-        /* SEARCH / DETAILED DATA TABLE */
-        .search-bar {
-            margin-bottom: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .search-bar input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-header);
-            color: var(--text-main);
-            outline: none;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .table-responsive th {
-            position: sticky;
-            top: 0;
-            z-index: 10;
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 </head>
-<body>
+<body class="text-slate-800 antialiased p-3 sm:p-5">
 
-<div class="container">
+    <div class="max-w-[1600px] mx-auto space-y-4">
 
-    <!-- HEADER -->
-    <div class="header">
-        <h1>RETROFIT DE USCAs | SPI • EVOLUÇÃO EXECUTIVA</h1>
-        <span style="color: var(--text-muted); font-size: 0.85rem;">Status Atualizado: Outubro/2026</span>
-    </div>
-
-    <!-- KPI CARDS -->
-    <div class="kpi-grid">
-        <div class="kpi-card kpi-total">
-            <span class="title">TOTAL USCA</span>
-            <span class="value">76</span>
-        </div>
-        <div class="kpi-card kpi-concluido">
-            <span class="title">CONCLUÍDO</span>
-            <span class="value">33</span>
-        </div>
-        <div class="kpi-card kpi-programado">
-            <span class="title">PROGRAMADO</span>
-            <span class="value">35</span>
-        </div>
-        <div class="kpi-card kpi-pendente">
-            <span class="title">PENDENTE</span>
-            <span class="value">8</span>
-        </div>
-    </div>
-
-    <!-- SEÇÃO DE TABELAS -->
-    <div class="grid-two-col">
-        <!-- EVOLUÇÃO ACUMULADA POR MARCO -->
-        <div class="card">
-            <div class="card-title">EVOLUÇÃO ACUMULADA POR MARCO</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Marco</th>
-                        <th>Novas entregas</th>
-                        <th>Acumulado</th>
-                        <th>Avanço %</th>
-                        <th>Situação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Executado</td>
-                        <td>33</td>
-                        <td>33</td>
-                        <td>43,4%</td>
-                        <td><span class="badge badge-realizado">Realizado</span></td>
-                    </tr>
-                    <tr>
-                        <td>Até 31/10</td>
-                        <td>21</td>
-                        <td>53</td>
-                        <td>69,7%</td>
-                        <td><span class="badge badge-programado">Programado</span></td>
-                    </tr>
-                    <tr>
-                        <td>Até 13/11</td>
-                        <td>14</td>
-                        <td class="highlight-purple">67</td>
-                        <td>88,2%</td>
-                        <td><span class="badge badge-programado">Programado</span></td>
-                    </tr>
-                    <tr>
-                        <td>Até 15/12</td>
-                        <td>9</td>
-                        <td>76</td>
-                        <td>100,0%</td>
-                        <td><span class="badge badge-meta">Meta condicionada</span></td>
-                    </tr>
-                    <tr style="font-weight: bold; background-color: var(--bg-header);">
-                        <td>TOTAL</td>
-                        <td>76</td>
-                        <td>76</td>
-                        <td>100,0%</td>
-                        <td>-</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS -->
-        <div class="card">
-            <div class="card-title">FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Fornecedor</th>
-                        <th>Concluído</th>
-                        <th>Até 31/10</th>
-                        <th>Até 13/11</th>
-                        <th>13-30/11</th>
-                        <th>Sem data</th>
-                        <th class="text-danger">Aguard. aprovação</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>AC TECH</td>
-                        <td class="highlight-purple">10</td>
-                        <td>2</td>
-                        <td>3</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td class="text-danger">0</td>
-                        <td>15</td>
-                    </tr>
-                    <tr>
-                        <td>CICLO</td>
-                        <td class="highlight-purple">11</td>
-                        <td>4</td>
-                        <td>3</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td class="text-danger">1</td>
-                        <td>18</td>
-                    </tr>
-                    <tr>
-                        <td>ENERG</td>
-                        <td class="highlight-purple">3</td>
-                        <td>2</td>
-                        <td>5</td>
-                        <td>0</td>
-                        <td>5</td>
-                        <td class="text-danger">3</td>
-                        <td>18</td>
-                    </tr>
-                    <tr>
-                        <td>KILOWATTS</td>
-                        <td class="highlight-purple">8</td>
-                        <td>13</td>
-                        <td>3</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td class="text-danger">0</td>
-                        <td>24</td>
-                    </tr>
-                    <tr>
-                        <td>SISTEL</td>
-                        <td class="highlight-purple">1</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td class="text-danger">0</td>
-                        <td>1</td>
-                    </tr>
-                    <tr style="font-weight: bold; background-color: var(--bg-header);">
-                        <td>TOTAL</td>
-                        <td class="highlight-purple">33</td>
-                        <td>21</td>
-                        <td>14</td>
-                        <td>0</td>
-                        <td>5</td>
-                        <td class="text-danger">4</td>
-                        <td>76</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="banner-alert">
-                <strong>ATENÇÃO:</strong> 5 USCAs sem data + 4 aguardando aprovação. A entrega até 15/12 depende de regularização e programação.
+        <!-- HEADER BANNER -->
+        <header class="bg-navy-900 text-white rounded-xl p-4 sm:p-5 shadow-lg flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-400 text-2xl shrink-0 shadow-inner">
+                    <i class="fa-solid fa-rotate"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <h1 class="text-xl sm:text-2xl font-black tracking-wide text-white">CONTROLE DE DEMANDA DE RETROFIT DE USCAs (SPI)</h1>
+                        <span class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                            Google Sheets Live • Aba Analítica
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5 font-medium">
+                        Contrato Vivo • Acompanhamento Gerencial de Retrofit • Planta Interna & Rede de Acesso
+                    </p>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- SEÇÃO DE GRÁFICOS -->
-    <div class="charts-grid">
-        <div class="card">
-            <div class="card-title">Distribuição de Status por Fornecedor</div>
-            <div class="chart-container">
-                <canvas id="supplierChart"></canvas>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-title">Curva de Avanço Acumulado (USCAs)</div>
-            <div class="chart-container">
-                <canvas id="trendChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- DADOS DETALHADOS DA PLANILHA -->
-    <div class="card">
-        <div class="card-title">BASE DE DADOS COMPLETA DO RETROFIT</div>
-        <div class="search-bar">
-            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Buscar por Site, OS, Fornecedor, DDD ou Status...">
-        </div>
-        <div class="table-responsive">
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th>OS Retrofit</th>
-                        <th>Pc</th>
-                        <th>Fornecedor</th>
-                        <th>DDD</th>
-                        <th>Site</th>
-                        <th>Central</th>
-                        <th>Status OS</th>
-                        <th>Fase</th>
-                        <th>Serviço</th>
-                        <th>Data Serviço</th>
-                        <th>OS Módulo / Sensor</th>
-                        <th>Pendências</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- Gerado via JavaScript dinamicamente -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-</div>
-
-<script>
-    // 1. DADOS BRUTOS EXTRAÍDOS DA PLANILHA
-    const rawData = [
-        ["586950581","PENDENTE","CICLO","DDD12","F.SP.CGT.MG.GMG1","CGT.MG","Pendente Aprov. Orçamento Corrigido","FASE 2","Aguard. Aprovação","Aguard. Aprovação","587080766","PENDENTE"],
-        ["587239803","PENDENTE","ENERG","DDD18","F.SP.RAC.HD.GMG1","RAC.HD","Pendente Gerente Aprov. Orçamento","FASE 2","Aguard. Aprovação","Aguard. Aprovação","587239808","PENDENTE"],
-        ["587239783","PENDENTE","ENERG","PAA","F.SP.PAA.VR.GMG1","PAA.VR","Pendente Gerente de Divisão Aprov. Orçamento","FASE 3","Aguard. Aprovação","Aguard. Aprovação","587239799","PENDENTE"],
-        ["587257353","PENDENTE","ENERG","CAS","F.SP.IDU.MR","IDU.MR","Pendente Gerente de Divisão Aprov. Orçamento","FASE 3","Aguard. Aprovação","Aguard. Aprovação","587257366","PENDENTE"],
-        ["586817249","SIM","AC TECH","DDD17","F.SP.SRR.MC","SRR.MC","OS em Processo de Faturamento","FASE 1","Concluido","Concluido","587015225","Sim"],
-        ["586886737","SIM","KILOWATTS","DDD16","F.SP.RPO.GC","RPO.GC","OS em Processo de Faturamento","FASE 1","Concluido","Concluido","587015228","Sim"],
-        ["586886703","SIM","KILOWATTS","PAA","F.SP.CDP.GK","CDP.GK","Serviço Executado","FASE 1","Concluido","Concluido","587015227","Sim"],
-        ["586886700","SIM","KILOWATTS","DDD18","F.SP.ARC.XN","ARC.XN","Serviço Executado","FASE 1","Concluido","Concluido","587015226","Sim"],
-        ["586817232","SIM","AC TECH","CAS","F.SP.CAS.CL","CAS.CL","Serviço Executado","FASE 1","Concluido","Concluido","587015196","Sim"],
-        ["586817250","SIM","CICLO","DDD12","F.SP.UTB.LZ","UTB.LZ","Faturado","FASE 1","Concluido","Concluido","587015185","Sim"],
-        ["586817243","SIM","AC TECH","CAS","F.SP.CAS.NA","CAS.NA","Serviço Executado","FASE 1","Concluido","Concluido","587015206","Sim"],
-        ["586817236","SIM","CICLO","DDD12","F.SP.SJC.JS","SJC.JS","Faturado","FASE 1","Concluido","Concluido","587015164","Sim"],
-        ["586817248","SIM","AC TECH","CAS","F.SP.CAS.AM","CAS.AM","Faturado","FASE 1","Concluido","Concluido","587015193","Sim"],
-        ["586817238","SIM","CICLO","DDD12","F.SP.SJC.TT","SJC.TT","Faturado","FASE 1","Concluido","Concluido","587015176","Sim"],
-        ["586872106","SIM","CICLO","DDD12","F.SP.CPJ.ER","CPJ.ER","Faturado","FASE 1","Concluido","Concluido","587015184","Sim"],
-        ["586817240","SIM","AC TECH","DDD14","F.SP.ORN.MP","ORN.MP","Faturado","FASE 1","Concluido","Concluido","587015191","Sim"],
-        ["586817246","SIM","AC TECH","DDD14","F.SP.BRU.CE","BRU.CE","Faturado","FASE 1","Concluido","Concluido","587015189","Sim"],
-        ["586817242","SIM","AC TECH","DDD14","F.SP.BRU.AC","BRU.AC","Faturado","FASE 1","Concluido","Concluido","N.a","N.A"],
-        ["586950583","SIM","CICLO","DDD12","F.SP.TTE.IN.GMG1","TTE.IN","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587080771","Sim"],
-        ["586950585","SIM","CICLO","DDD12","F.SP.TTE.SJ.GMG1","TTE.SJ","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587080776","Sim"],
-        ["586948721","SIM","AC TECH","DDD17","F.SP.SRR.MC.GMG2","SRR.MC","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587067825","Sim"],
-        ["586950836","SIM","ENERG","DDD17","F.SP.SRR.VS.GMG2","SRR.VS","Encaminhada ao Campo","FASE 2","Concluido","Concluido","587067826","Sim"],
-        ["586950671","SIM","CICLO","CAS","F.SP.CAS.OV.GMG1","CAS.OV","Serviço Executado","FASE 2","Concluido","Concluido","587073865","Sim"],
-        ["586950660","SIM","KILOWATTS","CAS","F.SP.PDA.AP.GMG1","PDA.AP","Serviço Executado","FASE 2","Concluido","Concluido","587073869","Sim"],
-        ["587063861","SIM","KILOWATTS","DDD16","F.SP.RPO.LG.GMG1","RPO.LG","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587067673","Sim"],
-        ["586950607","SIM","SISTEL","DDD14","F.SP.MIA.JA.GMG1","MIA.JA","Serviço Executado","FASE 2","Concluido","Concluido","587015229","Sim"],
-        ["586887613","SIM","AC TECH","DDD14","F.SP.BRU.AC.GMG2.USCA1","BRU.AC","Vistoria Aprovada","FASE 2","Concluido","Concluido","587067799","Sim"],
-        ["586950649","SIM","KILOWATTS","DDD16","F.SP.RPO.OE.GMG1","RPO.OE","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587015232","Sim"],
-        ["586950612","SIM","ENERG","DDD14","F.SP.MIA.JA.GMG2","MIA.JA","Serviço Executado","FASE 2","Concluido","Concluido","587067823","Sim"],
-        ["586950635","SIM","AC TECH","DDD17","F.SP.SRR.VS.GMG3","SRR.VS","OS em Processo de Faturamento","FASE 2","Concluido","Concluido","587067830","Sim"],
-        ["586950658","SIM","CICLO","CAS","F.SP.CAS.CB.GMG3","CAS.CB","Vistoria Aprovada","FASE 2","Concluido","Concluido","587067832","Sim"],
-        ["586950657","SIM","CICLO","CAS","F.SP.CAS.CB.GMG1","CAS.CB","Vistoria Aprovada","FASE 2","Concluido","Concluido","587015234","Sim"],
-        ["586950688","SIM","KILOWATTS","DDD16","F.SP.RPO.QF.GMG1","RPO.QF","OS em Processo de Faturamento","FASE 3","Concluido","Concluido","587082003","Sim"],
-        ["586950606","SIM","ENERG","DDD14","F.SP.AVR.SC.GMG1","AVR.SC","Execução Concluída / Pendente Aprov. Supv","FASE 3","Concluido","Concluido","587081972","Sim"],
-        ["586950689","SIM","KILOWATTS","DDD16","F.SP.SRA.AC.GMG1","SRA.AC","Encaminhada ao Campo","FASE 4","Concluido","Concluido","587082002","Sim"],
-        ["586950576","SIM","CICLO","DDD12","F.SP.GTA.NG.GMG1","GTA.NG","Serviço Executado","FASE 2","Concluido","10/20/2026","587080768","Sim"],
-        ["586950566","SIM","CICLO","DDD12","F.SP.JCI.JM.GMG1","JCI.JM","Serviço Executado","FASE 2","Concluido","Concluido","587080770","Sim"],
-        ["586950630","SIM","CICLO","DDD14","F.SP.MIA.JA.GMG3","MIA.JA","Encaminhada ao Campo","FASE 2","Programação","11/5/2026","587067824","Sim"],
-        ["586951194","SIM","KILOWATTS","DDD15","F.SP.SOC.CR.GMG1","SOC.CR","Execução Incompleta","FASE 2","Programação","10/22/2026","587082026","Sim"],
-        ["586951204","SIM","KILOWATTS","DDD15","F.SP.SOC.CR.GMG2","SOC.CR","Execução Incompleta","FASE 2","Programação","10/22/2026","587082023","Sim"],
-        ["586950840","SIM","KILOWATTS","DDD17","F.SP.SRR.VS.GMG3","SRR.VS","Encaminhada ao Campo","FASE 2","Programação","10/31/2026","587067830","Sim"],
-        ["586950677","SIM","AC TECH","CAS","F.SP.MOR.JP.GMG1","MOR.JP","Encaminhada ao Campo","FASE 2","Programação","11/3/2026","587073867","Sim"],
-        ["586950721","SIM","AC TECH","CAS","F.SP.SNG.SM.GMG1","SNG.SM","Encaminhada ao Campo","FASE 2","Programação","11/5/2026","587073870","Sim"],
-        ["587083792","SIM","KILOWATTS","DDD17","F.SP.SRR.RD.GMG1","SRR.RD","Encaminhada ao Campo","FASE 2","Programação","10/31/2026","587083822","Sim"],
-        ["586950675","SIM","ENERG","CAS","F.SP.MGU.HC.GMG1","MGU.HC","Encaminhada ao Campo","FASE 2","Sem Data","Sem Data","587081998","Sim"],
-        ["586950639","SIM","KILOWATTS","DDD17","F.SP.SRR.EL.GMG1","SRR.EL","Encaminhada ao Campo","FASE 2","Programação","10/31/2026","587082008","Sim"],
-        ["586950587","SIM","CICLO","DDD18","F.SP.PPE.BG.GMG1","PPE.BG","Encaminhada ao Campo","FASE 2","Programação","10/28/2026","587081997","Sim"],
-        ["586950663","SIM","AC TECH","CAS","F.SP.CAS.VC.GMG1","CAS.VC","Encaminhada ao Campo","FASE 2","Programação","11/9/2026","587081958","Sim"],
-        ["586950699","SIM","ENERG","CAS","F.SP.CAS.BE.GMG1","CAS.BE","Encaminhada ao Campo","FASE 2","Programação","11/12/2026","587081963","Sim"],
-        ["586950641","SIM","KILOWATTS","DDD17","F.SP.FND.GS.GMG1","FND.GS","Encaminhada ao Campo","FASE 2","Programação","11/5/2026","587082007","Sim"],
-        ["587192142","SIM","ENERG","DDD18","F.SP.ADT.EC.GMG1","ADT.EC","Encaminhada ao Campo","FASE 2","Programação","11/13/2026","587081974","Sim"],
-        ["586950697","SIM","ENERG","CAS","F.SP.LOU.SA.GMG1","LOU.SA","Encaminhada ao Campo","FASE 2","Sem Data","Sem Data","587081940","Sim"],
-        ["587169916","SIM","CICLO","DDD12","F.SP.UTB.PG","UTB.PG","Encaminhada ao Campo","FASE 2","Programação","10/23/2026","587248537","Sim"],
-        ["586950590","SIM","ENERG","DDD18","F.SP.PPE.SG.GMG1","PPE.SG","Encaminhada ao Campo","FASE 2","Programação","11/5/2026","587081995","Sim"],
-        ["586950601","SIM","CICLO","DDD14","F.SP.TUP.RC.GMG1","TUP.RC","Encaminhada ao Campo","FASE 3","Programação","10/30/2026","587081969","Sim"],
-        ["586951209","SIM","KILOWATTS","DDD15","F.SP.BTV.AB.GMG1","BTV.AB","Encaminhada ao Campo","FASE 3","Programação","10/28/2026","587082017","Sim"],
-        ["586951213","SIM","KILOWATTS","DDD15","F.SP.CQO.RF.GMG1","CQO.RF","Encaminhada ao Campo","FASE 3","Programação","10/28/2026","587082011","Sim"],
-        ["586951211","SIM","KILOWATTS","DDD15","F.SP.IGA.QB.GMG1","IGA.QB","Encaminhada ao Campo","FASE 3","Programação","10/28/2026","587082013","Sim"],
-        ["586951210","SIM","KILOWATTS","DDD15","F.SP.PRF.PF.GMG1","PRF.PF","Encaminhada ao Campo","FASE 3","Programação","10/24/2026","587082015","Sim"],
-        ["586951205","SIM","KILOWATTS","DDD15","F.SP.SOC.AP.GMG1","SOC.AP","Encaminhada ao Campo","FASE 3","Programação","10/22/2026","587082020","Sim"],
-        ["586951208","SIM","KILOWATTS","DDD15","F.SP.TIE.TT.GMG1","TIE.TT","Encaminhada ao Campo","FASE 3","Programação","10/24/2026","587082018","Sim"],
-        ["586950654","SIM","KILOWATTS","DDD16","F.SP.ABS.FM.GMG1","ABS.FM","Encaminhada ao Campo","FASE 3","Programação","10/28/2026","587081977","Sim"],
-        ["586950780","SIM","AC TECH","CAS","F.SP.CAS.BG.GMG1","CAS.BG","Encaminhada ao Campo","FASE 3","Programação","10/29/2026","587081954","Sim"],
-        ["586950667","SIM","AC TECH","CAS","F.SP.IDU.DP.GMG1","IDU.DP","Encaminhada ao Campo","FASE 3","Programação","10/26/2026","587081961","Sim"],
-        ["586950596","SIM","ENERG","DDD14","F.SP.BRU.RE.GMG1","BRU.RE","Encaminhada ao Campo","FASE 3","Programação","10/23/2026","587081970","Sim"],
-        ["586950633","SIM","CICLO","DDD14","F.SP.MIA.SR.GMG1","MIA.SR","Encaminhada ao Campo","FASE 3","Programação","11/4/2026","587082001","Sim"],
-        ["586950598","SIM","ENERG","DDD14","F.SP.BRU.VA.GMG1","BRU.VA","Em Execução","FASE 3","Programação","10/22/2026","587081968","Sim"],
-        ["586950594","SIM","ENERG","DDD18","F.SP.DRA.RB.GMG1","DRA.RB","Encaminhada ao Campo","FASE 3","Programação","11/6/2026","587081950","Sim"],
-        ["586950593","SIM","ENERG","DDD18","F.SP.ADD.AD.GMG1","ADD.AD","Encaminhada ao Campo","FASE 3","Programação","11/10/2026","587081947","Sim"],
-        ["587084506","SIM","ENERG","DDD14","F.SP.AVR.RD.GMG1.USCA1","AVR.RD","Encaminhada ao Campo","FASE 4","Sem Data","Sem Data","587084513","Sim"],
-        ["587084043","SIM","ENERG","DDD17","F.SP.JOB.NJ.GMG1","JOB.NJ","Encaminhada ao Campo","FASE 4","Sem Data","Sem Data","587084065","Sim"],
-        ["586950645","SIM","ENERG","DDD17","F.SP.SFL.DZ.GMG1","SFL.DZ","Encaminhada ao Campo","FASE 4","Sem Data","Sem Data","587082006","Sim"],
-        ["587083916","SIM","KILOWATTS","DDD17","F.SP.BRS.BR.GMG1","BRS.BR","Encaminhada ao Campo","FASE 3","Programação","11/5/2026","587083917","Sim"],
-        ["587083829","SIM","KILOWATTS","DDD17","F.SP.SRR.VT.GMG1","SRR.VT","Encaminhada ao Campo","FASE 3","Programação","10/31/2026","587083832","Sim"],
-        ["587189073","SIM","CICLO","DDD14","F.SP.BRU.VF.GMG1","BRU.VF","Encaminhada ao Campo","FASE 3","Programação","11/3/2026","587189064","Sim"],
-        ["587083918","SIM","KILOWATTS","DDD17","F.SP.BDO.JM.GMG1","BDO.JM","Encaminhada ao Campo","FASE 3","Programação","11/5/2026","587083919","Sim"]
-    ];
-
-    // POPULAR TABELA DE DADOS
-    function populateTable() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        rawData.forEach(row => {
-            const tr = document.createElement('tr');
-            row.forEach((cell, idx) => {
-                const td = document.createElement('td');
-                td.textContent = cell;
+            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end border-t border-slate-700/60 lg:border-t-0 pt-3 lg:pt-0">
+                <div class="text-right mr-2 hidden sm:block">
+                    <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Última Sincronização</span>
+                    <span id="syncTimestamp" class="text-sm font-extrabold text-white">15:35:55</span>
+                </div>
                 
-                // Colorir os Status e Pendências
-                if (idx === 1 || idx === 11) {
-                    if (cell === 'PENDENTE') td.className = 'text-danger';
-                }
-                if (idx === 8 && cell === 'Concluido') {
-                    td.style.color = '#4ade80';
-                    td.style.fontWeight = 'bold';
-                }
-                tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-        });
-    }
+                <button onclick="triggerSync()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
+                    <i class="fa-solid fa-arrows-rotate" id="syncIcon"></i> Sincronizar
+                </button>
+                <button onclick="printReport()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
+                    <i class="fa-solid fa-file-pdf"></i> Relatório / PDF
+                </button>
+                <button onclick="exportCSV()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
+                    <i class="fa-solid fa-file-csv"></i> Exportar Base
+                </button>
+            </div>
+        </header>
 
-    // FILTRO DE BUSCA
-    function filterTable() {
-        const input = document.getElementById("searchInput").value.toUpperCase();
-        const trs = document.getElementById("dataTable").getElementsByTagName("tr");
-        for (let i = 1; i < trs.length; i++) {
-            let show = false;
-            const tds = trs[i].getElementsByTagName("td");
-            for (let j = 0; j < tds.length; j++) {
-                if (tds[j] && tds[j].textContent.toUpperCase().indexOf(input) > -1) {
-                    show = true;
-                    break;
-                }
-            }
-            trs[i].style.display = show ? "" : "none";
+        <!-- NOTIFICATION BANNER -->
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-lg p-3 px-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs sm:text-sm shadow-sm">
+            <div class="flex items-center gap-2 font-medium">
+                <div class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shrink-0">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <span><strong>Sucesso:</strong> Base de dados publicada e atualizada dinamicamente com a planilha.</span>
+            </div>
+            <div class="bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1 rounded-md text-xs font-bold shadow-2xs self-end sm:self-auto">
+                Objetivo: Conclusão e Regularização dos Retrofits SPI
+            </div>
+        </div>
+
+        <!-- KPI CARDS ROW -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <!-- TOTAL -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">TOTAL DEMANDAS</span>
+                    <i class="fa-solid fa-circle-info text-slate-300 text-xs"></i>
+                </div>
+                <div class="my-2 flex items-baseline gap-2">
+                    <span id="kpiTotal" class="text-3xl font-black text-slate-900">76</span>
+                    <span class="bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                        100% da Base
+                    </span>
+                </div>
+                <div class="text-xs font-semibold text-slate-500 pt-1 border-t border-slate-100 flex justify-between">
+                    <span>Meta Prevista:</span>
+                    <span class="font-bold text-slate-700">76 USCAs</span>
+                </div>
+            </div>
+
+            <!-- CONCLUÍDAS -->
+            <div class="bg-white rounded-xl p-4 border-t-4 border-t-emerald-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">EXECUTADAS / FATURADAS</span>
+                    <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+                </div>
+                <div class="my-2 flex items-baseline justify-between">
+                    <span id="kpiExecutadas" class="text-3xl font-black text-slate-900">33</span>
+                    <span id="badgeExecutadas" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                        43.4% do total
+                    </span>
+                </div>
+                <div class="text-xs font-semibold text-emerald-600 pt-1 border-t border-slate-100 flex justify-between">
+                    <span>Status:</span>
+                    <span class="font-bold">Concluído / Faturado</span>
+                </div>
+            </div>
+
+            <!-- PROGRAMADAS -->
+            <div class="bg-white rounded-xl p-4 border-t-4 border-t-sky-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-sky-600">PROGRAMADAS</span>
+                    <i class="fa-solid fa-calendar-check text-sky-500 text-sm"></i>
+                </div>
+                <div class="my-2 flex items-baseline justify-between">
+                    <span id="kpiProgramadas" class="text-3xl font-black text-slate-900">35</span>
+                    <span id="badgeProgramadas" class="bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                        46.1% do total
+                    </span>
+                </div>
+                <div class="text-xs font-semibold text-sky-600 pt-1 border-t border-slate-100 flex justify-between">
+                    <span>Em Agendamento:</span>
+                    <span class="font-bold">Com Data Marcada</span>
+                </div>
+            </div>
+
+            <!-- PENDENTES -->
+            <div class="bg-white rounded-xl p-4 border-t-4 border-t-amber-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-600">PENDENTES / OUTROS</span>
+                    <i class="fa-solid fa-hourglass-half text-amber-500 text-sm"></i>
+                </div>
+                <div class="my-2 flex items-baseline justify-between">
+                    <span id="kpiPendentes" class="text-3xl font-black text-slate-900">8</span>
+                    <span id="badgePendentes" class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                        10.5% do total
+                    </span>
+                </div>
+                <div class="text-xs font-semibold text-amber-600 pt-1 border-t border-slate-100 flex justify-between">
+                    <span>Situação:</span>
+                    <span class="font-bold">Sem Data / Aprovação</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTROS DE PESQUISA -->
+        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-sky-700">
+                    <i class="fa-solid fa-filter"></i>
+                    <span>FILTROS DE PESQUISA</span>
+                </div>
+                <button onclick="clearFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-md transition flex items-center gap-1">
+                    <i class="fa-solid fa-filter-circle-xmark"></i> Limpar Filtros
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Fornecedor</label>
+                    <select id="filterFornecedor" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
+                        <option value="">Todos os Fornecedores</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">DDD</label>
+                    <select id="filterDDD" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
+                        <option value="">Todos os DDDs</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Status OS</label>
+                    <select id="filterStatus" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
+                        <option value="">Todos os Status</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Fase</label>
+                    <select id="filterFase" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
+                        <option value="">Todas as Fases</option>
+                    </select>
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                    <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Pendência</label>
+                    <select id="filterPendencia" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
+                        <option value="">Todas</option>
+                        <option value="PENDENTE">Apenas PENDENTES</option>
+                        <option value="Sim">Apenas OK (Sim)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHARTS SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <!-- LEFT CHART -->
+            <div class="lg:col-span-7 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">EVOLUÇÃO ACUMULADA POR MARCO</h3>
+                    <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded">Meta Executiva</span>
+                </div>
+                <div class="h-64 relative">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- RIGHT CHART -->
+            <div class="lg:col-span-5 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">DISTRIBUIÇÃO DAS DEMANDAS POR FORNECEDOR</h3>
+                    <span class="text-[10px] bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded">Acompanhamento</span>
+                </div>
+                <div class="h-64 relative">
+                    <canvas id="supplierChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUMMARY TABLES SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <!-- TABELA MARCOS -->
+            <div class="lg:col-span-5 bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-3 flex items-center justify-between">
+                    <span>MARCOS E METAS DE EVOLUÇÃO</span>
+                    <i class="fa-solid fa-flag-checkered text-slate-400"></i>
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-center border-collapse">
+                        <thead>
+                            <tr class="bg-navy-900 text-white font-bold">
+                                <th class="p-2 text-left rounded-tl-md">Marco</th>
+                                <th class="p-2">Novas</th>
+                                <th class="p-2">Acum.</th>
+                                <th class="p-2">Avanço %</th>
+                                <th class="p-2 rounded-tr-md">Situação</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-2 text-left font-bold text-slate-900">Executado</td>
+                                <td class="p-2">33</td>
+                                <td class="p-2 font-bold">33</td>
+                                <td class="p-2 text-emerald-600 font-bold">43,4%</td>
+                                <td class="p-2"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">Realizado</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-2 text-left font-bold text-slate-900">Até 31/10</td>
+                                <td class="p-2">21</td>
+                                <td class="p-2 font-bold">53</td>
+                                <td class="p-2 text-sky-600 font-bold">69,7%</td>
+                                <td class="p-2"><span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 bg-purple-50/50">
+                                <td class="p-2 text-left font-bold text-purple-950">Até 13/11</td>
+                                <td class="p-2">14</td>
+                                <td class="p-2 font-black text-purple-700">67</td>
+                                <td class="p-2 text-purple-700 font-bold">88,2%</td>
+                                <td class="p-2"><span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-2 text-left font-bold text-slate-900">Até 15/12</td>
+                                <td class="p-2">9</td>
+                                <td class="p-2 font-bold">76</td>
+                                <td class="p-2 text-amber-600 font-bold">100,0%</td>
+                                <td class="p-2"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">Meta Cond.</span></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-100 font-bold text-slate-900">
+                                <td class="p-2 text-left">TOTAL</td>
+                                <td class="p-2">76</td>
+                                <td class="p-2">76</td>
+                                <td class="p-2">100,0%</td>
+                                <td class="p-2">-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TABELA FORNECEDORES DETALHE -->
+            <div class="lg:col-span-7 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-3 flex items-center justify-between">
+                        <span>FORNECEDORES | EXECUÇÃO, PRAZOS E PENDÊNCIAS</span>
+                        <i class="fa-solid fa-truck-field text-slate-400"></i>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-center border-collapse">
+                            <thead>
+                                <tr class="bg-navy-900 text-white font-bold">
+                                    <th class="p-2 text-left rounded-tl-md">Fornecedor</th>
+                                    <th class="p-2 bg-emerald-800">Concluído</th>
+                                    <th class="p-2">Até 31/10</th>
+                                    <th class="p-2">Até 13/11</th>
+                                    <th class="p-2">Sem Data</th>
+                                    <th class="p-2 bg-rose-900 text-rose-200">Aprov. Pendente</th>
+                                    <th class="p-2 rounded-tr-md">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-2 text-left font-bold">AC TECH</td>
+                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">10</td>
+                                    <td class="p-2">2</td>
+                                    <td class="p-2">3</td>
+                                    <td class="p-2">0</td>
+                                    <td class="p-2 font-bold text-slate-400">0</td>
+                                    <td class="p-2 font-bold">15</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-2 text-left font-bold">CICLO</td>
+                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">11</td>
+                                    <td class="p-2">4</td>
+                                    <td class="p-2">3</td>
+                                    <td class="p-2">0</td>
+                                    <td class="p-2 font-bold text-rose-600 bg-rose-50">1</td>
+                                    <td class="p-2 font-bold">18</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-2 text-left font-bold">ENERG</td>
+                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">3</td>
+                                    <td class="p-2">2</td>
+                                    <td class="p-2">5</td>
+                                    <td class="p-2 font-bold text-amber-600">5</td>
+                                    <td class="p-2 font-bold text-rose-600 bg-rose-50">3</td>
+                                    <td class="p-2 font-bold">18</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-2 text-left font-bold">KILOWATTS</td>
+                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">8</td>
+                                    <td class="p-2">13</td>
+                                    <td class="p-2">3</td>
+                                    <td class="p-2">0</td>
+                                    <td class="p-2 font-bold text-slate-400">0</td>
+                                    <td class="p-2 font-bold">24</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50">
+                                    <td class="p-2 text-left font-bold">SISTEL</td>
+                                    <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">1</td>
+                                    <td class="p-2">0</td>
+                                    <td class="p-2">0</td>
+                                    <td class="p-2">0</td>
+                                    <td class="p-2 font-bold text-slate-400">0</td>
+                                    <td class="p-2 font-bold">1</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-slate-100 font-bold text-slate-900">
+                                    <td class="p-2 text-left">TOTAL</td>
+                                    <td class="p-2 text-emerald-700">33</td>
+                                    <td class="p-2">21</td>
+                                    <td class="p-2">14</td>
+                                    <td class="p-2 text-amber-600">5</td>
+                                    <td class="p-2 text-rose-600">4</td>
+                                    <td class="p-2">76</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 text-sm shrink-0"></i>
+                    <span><strong>Atenção Gerencial:</strong> 5 USCAs sem data + 4 aguardando aprovação orçamentária. A entrega final até 15/12 depende de regularização.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAILED DATA TABLE -->
+        <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-database text-sky-600"></i>
+                        <span>BASE DE DADOS DETALHADA DAS OSs</span>
+                    </h3>
+                    <p class="text-[11px] text-slate-500">Listagem de todas as OSs de Retrofit e Sensores cadastradas</p>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Buscar OS, Site, Central..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs font-medium focus:bg-white focus:border-sky-500 outline-none transition">
+                    </div>
+                    <span id="rowCount" class="bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        76 registros
+                    </span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar max-h-[500px]">
+                <table id="dataTable" class="w-full text-xs text-left border-collapse">
+                    <thead class="sticky top-0 z-10 bg-navy-900 text-white font-bold">
+                        <tr>
+                            <th class="p-2.5 border-b border-slate-700">OS Retrofit</th>
+                            <th class="p-2.5 border-b border-slate-700">Pc</th>
+                            <th class="p-2.5 border-b border-slate-700">Fornecedor</th>
+                            <th class="p-2.5 border-b border-slate-700">DDD</th>
+                            <th class="p-2.5 border-b border-slate-700">Site</th>
+                            <th class="p-2.5 border-b border-slate-700">Central</th>
+                            <th class="p-2.5 border-b border-slate-700">Status OS</th>
+                            <th class="p-2.5 border-b border-slate-700">Fase</th>
+                            <th class="p-2.5 border-b border-slate-700">Serviço</th>
+                            <th class="p-2.5 border-b border-slate-700">Data Serviço</th>
+                            <th class="p-2.5 border-b border-slate-700">OS Módulo/Sensor</th>
+                            <th class="p-2.5 border-b border-slate-700 text-center">Pendência</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT DE DADOS E LÓGICA -->
+    <script>
+        // DATA PARSED FROM CSV SPREADSHEET
+        const dataset = [
+            { os: "586950581", pc: "PENDENTE", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.CGT.MG.GMG1", central: "CGT.MG", status: "Pendente Aprov. Orçamento Corrigido", fase: "FASE 2", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587080766", pendencias: "PENDENTE" },
+            { os: "587239803", pc: "PENDENTE", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.RAC.HD.GMG1", central: "RAC.HD", status: "Pendente Gerente Aprov. Orçamento", fase: "FASE 2", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587239808", pendencias: "PENDENTE" },
+            { os: "587239783", pc: "PENDENTE", fornecedor: "ENERG", ddd: "PAA", site: "F.SP.PAA.VR.GMG1", central: "PAA.VR", status: "Pendente Gerente de Divisão Aprov. Orçamento", fase: "FASE 3", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587239799", pendencias: "PENDENTE" },
+            { os: "587257353", pc: "PENDENTE", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.IDU.MR", central: "IDU.MR", status: "Pendente Gerente de Divisão Aprov. Orçamento", fase: "FASE 3", servico: "Aguard. Aprovação", dataServico: "Aguard. Aprovação", osModulo: "587257366", pendencias: "PENDENTE" },
+            { os: "586817249", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.MC", central: "SRR.MC", status: "OS em Processo de Faturamento", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015225", pendencias: "Sim" },
+            { os: "586886737", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.GC", central: "RPO.GC", status: "OS em Processo de Faturamento", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015228", pendencias: "Sim" },
+            { os: "586886703", pc: "SIM", fornecedor: "KILOWATTS", ddd: "PAA", site: "F.SP.CDP.GK", central: "CDP.GK", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015227", pendencias: "Sim" },
+            { os: "586886700", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD18", site: "F.SP.ARC.XN", central: "ARC.XN", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015226", pendencias: "Sim" },
+            { os: "586817232", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.CL", central: "CAS.CL", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015196", pendencias: "Sim" },
+            { os: "586817250", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.UTB.LZ", central: "UTB.LZ", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015185", pendencias: "Sim" },
+            { os: "586817243", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.NA", central: "CAS.NA", status: "Serviço Executado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015206", pendencias: "Sim" },
+            { os: "586817236", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.SJC.JS", central: "SJC.JS", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015164", pendencias: "Sim" },
+            { os: "586817248", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.AM", central: "CAS.AM", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015193", pendencias: "Sim" },
+            { os: "586817238", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.SJC.TT", central: "SJC.TT", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015176", pendencias: "Sim" },
+            { os: "586872106", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.CPJ.ER", central: "CPJ.ER", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015184", pendencias: "Sim" },
+            { os: "586817240", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.ORN.MP", central: "ORN.MP", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015191", pendencias: "Sim" },
+            { os: "586817246", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.CE", central: "BRU.CE", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "587015189", pendencias: "Sim" },
+            { os: "586817242", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.AC", central: "BRU.AC", status: "Faturado", fase: "FASE 1", servico: "Concluido", dataServico: "Concluido", osModulo: "N.a", pendencias: "N.A" },
+            { os: "586950583", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.TTE.IN.GMG1", central: "TTE.IN", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080771", pendencias: "Sim" },
+            { os: "586950585", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.TTE.SJ.GMG1", central: "TTE.SJ", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080776", pendencias: "Sim" },
+            { os: "586948721", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.MC.GMG2", central: "SRR.MC", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067825", pendencias: "Sim" },
+            { os: "586950836", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.SRR.VS.GMG2", central: "SRR.VS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067826", pendencias: "Sim" },
+            { os: "586950671", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.OV.GMG1", central: "CAS.OV", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587073865", pendencias: "Sim" },
+            { os: "586950660", pc: "SIM", fornecedor: "KILOWATTS", ddd: "CAS", site: "F.SP.PDA.AP.GMG1", central: "PDA.AP", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587073869", pendencias: "Sim" },
+            { os: "587063861", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.LG.GMG1", central: "RPO.LG", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067673", pendencias: "Sim" },
+            { os: "586950607", pc: "SIM", fornecedor: "SISTEL", ddd: "DDD14", site: "F.SP.MIA.JA.GMG1", central: "MIA.JA", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015229", pendencias: "Sim" },
+            { os: "586887613", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD14", site: "F.SP.BRU.AC.GMG2.USCA1", central: "BRU.AC", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067799", pendencias: "Sim" },
+            { os: "586950649", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.OE.GMG1", central: "RPO.OE", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015232", pendencias: "Sim" },
+            { os: "586950612", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.MIA.JA.GMG2", central: "MIA.JA", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067823", pendencias: "Sim" },
+            { os: "586950635", pc: "SIM", fornecedor: "AC TECH", ddd: "DDD17", site: "F.SP.SRR.VS.GMG3", central: "SRR.VS", status: "OS em Processo de Faturamento", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067830", pendencias: "Sim" },
+            { os: "586950658", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.CB.GMG3", central: "CAS.CB", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587067832", pendencias: "Sim" },
+            { os: "586950657", pc: "SIM", fornecedor: "CICLO", ddd: "CAS", site: "F.SP.CAS.CB.GMG1", central: "CAS.CB", status: "Vistoria Aprovada", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587015234", pendencias: "Sim" },
+            { os: "586950688", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.RPO.QF.GMG1", central: "RPO.QF", status: "OS em Processo de Faturamento", fase: "FASE 3", servico: "Concluido", dataServico: "Concluido", osModulo: "587082003", pendencias: "Sim" },
+            { os: "586950606", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.AVR.SC.GMG1", central: "AVR.SC", status: "Execução Concluída / Pendente Aprov. Supv", fase: "FASE 3", servico: "Concluido", dataServico: "Concluido", osModulo: "587081972", pendencias: "Sim" },
+            { os: "586950689", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.SRA.AC.GMG1", central: "SRA.AC", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Concluido", dataServico: "Concluido", osModulo: "587082002", pendencias: "Sim" },
+            { os: "586950576", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.GTA.NG.GMG1", central: "GTA.NG", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "10/20/2026", osModulo: "587080768", pendencias: "Sim" },
+            { os: "586950566", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.JCI.JM.GMG1", central: "JCI.JM", status: "Serviço Executado", fase: "FASE 2", servico: "Concluido", dataServico: "Concluido", osModulo: "587080770", pendencias: "Sim" },
+            { os: "586950630", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.MIA.JA.GMG3", central: "MIA.JA", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587067824", pendencias: "Sim" },
+            { os: "586951194", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.CR.GMG1", central: "SOC.CR", status: "Execução Incompleta", fase: "FASE 2", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082026", pendencias: "Sim" },
+            { os: "586951204", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.CR.GMG2", central: "SOC.CR", status: "Execução Incompleta", fase: "FASE 2", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082023", pendencias: "Sim" },
+            { os: "586950840", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.VS.GMG3", central: "SRR.VS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587067830", pendencias: "Sim" },
+            { os: "586950677", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.MOR.JP.GMG1", central: "MOR.JP", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/3/2026", osModulo: "587073867", pendencias: "Sim" },
+            { os: "586950721", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.SNG.SM.GMG1", central: "SNG.SM", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587073870", pendencias: "Sim" },
+            { os: "587083792", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.RD.GMG1", central: "SRR.RD", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587083822", pendencias: "Sim" },
+            { os: "586950675", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.MGU.HC.GMG1", central: "MGU.HC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587081998", pendencias: "Sim" },
+            { os: "586950639", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.EL.GMG1", central: "SRR.EL", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/31/2026", osModulo: "587082008", pendencias: "Sim" },
+            { os: "586950587", pc: "SIM", fornecedor: "CICLO", ddd: "DDD18", site: "F.SP.PPE.BG.GMG1", central: "PPE.BG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/28/2026", osModulo: "587081997", pendencias: "Sim" },
+            { os: "586950663", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.VC.GMG1", central: "CAS.VC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/9/2026", osModulo: "587081958", pendencias: "Sim" },
+            { os: "586950699", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.CAS.BE.GMG1", central: "CAS.BE", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/12/2026", osModulo: "587081963", pendencias: "Sim" },
+            { os: "586950641", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.FND.GS.GMG1", central: "FND.GS", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587082007", pendencias: "Sim" },
+            { os: "587192142", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.ADT.EC.GMG1", central: "ADT.EC", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/13/2026", osModulo: "587081974", pendencias: "Sim" },
+            { os: "586950697", pc: "SIM", fornecedor: "ENERG", ddd: "CAS", site: "F.SP.LOU.SA.GMG1", central: "LOU.SA", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587081940", pendencias: "Sim" },
+            { os: "587169916", pc: "SIM", fornecedor: "CICLO", ddd: "DDD12", site: "F.SP.UTB.PG", central: "UTB.PG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "10/23/2026", osModulo: "587248537", pendencias: "Sim" },
+            { os: "586950590", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.PPE.SG.GMG1", central: "PPE.SG", status: "Encaminhada ao Campo", fase: "FASE 2", servico: "Programação", dataServico: "11/5/2026", osModulo: "587081995", pendencias: "Sim" },
+            { os: "586950601", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.TUP.RC.GMG1", central: "TUP.RC", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/30/2026", osModulo: "587081969", pendencias: "Sim" },
+            { os: "586951209", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.BTV.AB.GMG1", central: "BTV.AB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082017", pendencias: "Sim" },
+            { os: "586951213", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.CQO.RF.GMG1", central: "CQO.RF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082011", pendencias: "Sim" },
+            { os: "586951211", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.IGA.QB.GMG1", central: "IGA.QB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587082013", pendencias: "Sim" },
+            { os: "586951210", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.PRF.PF.GMG1", central: "PRF.PF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/24/2026", osModulo: "587082015", pendencias: "Sim" },
+            { os: "586951205", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.SOC.AP.GMG1", central: "SOC.AP", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/22/2026", osModulo: "587082020", pendencias: "Sim" },
+            { os: "586951208", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD15", site: "F.SP.TIE.TT.GMG1", central: "TIE.TT", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/24/2026", osModulo: "587082018", pendencias: "Sim" },
+            { os: "586950654", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD16", site: "F.SP.ABS.FM.GMG1", central: "ABS.FM", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/28/2026", osModulo: "587081977", pendencias: "Sim" },
+            { os: "586950780", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.CAS.BG.GMG1", central: "CAS.BG", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/29/2026", osModulo: "587081954", pendencias: "Sim" },
+            { os: "586950667", pc: "SIM", fornecedor: "AC TECH", ddd: "CAS", site: "F.SP.IDU.DP.GMG1", central: "IDU.DP", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/26/2026", osModulo: "587081961", pendencias: "Sim" },
+            { os: "586950596", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.BRU.RE.GMG1", central: "BRU.RE", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/23/2026", osModulo: "587081970", pendencias: "Sim" },
+            { os: "586950633", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.MIA.SR.GMG1", central: "MIA.SR", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/4/2026", osModulo: "587082001", pendencias: "Sim" },
+            { os: "586950598", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.BRU.VA.GMG1", central: "BRU.VA", status: "Em Execução", fase: "FASE 3", servico: "Programação", dataServico: "10/22/2026", osModulo: "587081968", pendencias: "Sim" },
+            { os: "586950594", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.DRA.RB.GMG1", central: "DRA.RB", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/6/2026", osModulo: "587081950", pendencias: "Sim" },
+            { os: "586950593", pc: "SIM", fornecedor: "ENERG", ddd: "DDD18", site: "F.SP.ADD.AD.GMG1", central: "ADD.AD", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/10/2026", osModulo: "587081947", pendencias: "Sim" },
+            { os: "587084506", pc: "SIM", fornecedor: "ENERG", ddd: "DDD14", site: "F.SP.AVR.RD.GMG1.USCA1", central: "AVR.RD", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587084513", pendencias: "Sim" },
+            { os: "587084043", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.JOB.NJ.GMG1", central: "JOB.NJ", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587084065", pendencias: "Sim" },
+            { os: "586950645", pc: "SIM", fornecedor: "ENERG", ddd: "DDD17", site: "F.SP.SFL.DZ.GMG1", central: "SFL.DZ", status: "Encaminhada ao Campo", fase: "FASE 4", servico: "Sem Data", dataServico: "Sem Data", osModulo: "587082006", pendencias: "Sim" },
+            { os: "587083916", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.BRS.BR.GMG1", central: "BRS.BR", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/5/2026", osModulo: "587083917", pendencias: "Sim" },
+            { os: "587083829", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.SRR.VT.GMG1", central: "SRR.VT", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "10/31/2026", osModulo: "587083832", pendencias: "Sim" },
+            { os: "587189073", pc: "SIM", fornecedor: "CICLO", ddd: "DDD14", site: "F.SP.BRU.VF.GMG1", central: "BRU.VF", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/3/2026", osModulo: "587189064", pendencias: "Sim" },
+            { os: "587083918", pc: "SIM", fornecedor: "KILOWATTS", ddd: "DDD17", site: "F.SP.BDO.JM.GMG1", central: "BDO.JM", status: "Encaminhada ao Campo", fase: "FASE 3", servico: "Programação", dataServico: "11/5/2026", osModulo: "587083919", pendencias: "Sim" }
+        ];
+
+        let trendChartInstance = null;
+        let supplierChartInstance = null;
+
+        // POPULATE DROPDOWNS DYNAMICALLY
+        function populateDropdowns() {
+            const fornecedores = [...new Set(dataset.map(d => d.fornecedor))].sort();
+            const ddds = [...new Set(dataset.map(d => d.ddd))].sort();
+            const statusList = [...new Set(dataset.map(d => d.status))].sort();
+            const fases = [...new Set(dataset.map(d => d.fase))].sort();
+
+            const selForn = document.getElementById('filterFornecedor');
+            fornecedores.forEach(f => selForn.add(new Option(f, f)));
+
+            const selDDD = document.getElementById('filterDDD');
+            ddds.forEach(d => selDDD.add(new Option(d, d)));
+
+            const selStatus = document.getElementById('filterStatus');
+            statusList.forEach(s => selStatus.add(new Option(s, s)));
+
+            const selFase = document.getElementById('filterFase');
+            fases.forEach(fa => selFase.add(new Option(fa, fa)));
         }
-    }
 
-    // INICIALIZAR GRÁFICOS (CHART.JS)
-    function initCharts() {
-        // Gráfico 1: Fornecedores
-        const ctxSupplier = document.getElementById('supplierChart').getContext('2d');
-        new Chart(ctxSupplier, {
-            type: 'bar',
-            data: {
-                labels: ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'],
-                datasets: [
-                    {
-                        label: 'Concluído',
-                        data: [10, 11, 3, 8, 1],
-                        backgroundColor: '#f97316'
+        // APPLY FILTERS AND UPDATE DASHBOARD
+        function applyFilters() {
+            const fornVal = document.getElementById('filterFornecedor').value;
+            const dddVal = document.getElementById('filterDDD').value;
+            const statusVal = document.getElementById('filterStatus').value;
+            const faseVal = document.getElementById('filterFase').value;
+            const pendVal = document.getElementById('filterPendencia').value;
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            const filtered = dataset.filter(item => {
+                const matchForn = !fornVal || item.fornecedor === fornVal;
+                const matchDDD = !dddVal || item.ddd === dddVal;
+                const matchStatus = !statusVal || item.status === statusVal;
+                const matchFase = !faseVal || item.fase === faseVal;
+                const matchPend = !pendVal || item.pendencias === pendVal || (pendVal === 'PENDENTE' && item.pc === 'PENDENTE');
+                
+                const matchSearch = !searchVal || 
+                    item.os.toLowerCase().includes(searchVal) ||
+                    item.site.toLowerCase().includes(searchVal) ||
+                    item.central.toLowerCase().includes(searchVal) ||
+                    item.fornecedor.toLowerCase().includes(searchVal) ||
+                    item.status.toLowerCase().includes(searchVal);
+
+                return matchForn && matchDDD && matchStatus && matchFase && matchPend && matchSearch;
+            });
+
+            renderTable(filtered);
+            updateKPIs(filtered);
+            updateSupplierChart(filtered);
+        }
+
+        // RENDER DATA TABLE
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            document.getElementById('rowCount').textContent = `${data.length} registros`;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400 font-medium">Nenhuma demanda encontrada para os filtros selecionados.</td></tr>`;
+                return;
+            }
+
+            data.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100';
+
+                // Status Badge styling
+                let statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${row.status}</span>`;
+                if (row.servico === 'Concluido' || row.status.includes('Faturamento') || row.status === 'Faturado') {
+                    statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${row.status}</span>`;
+                } else if (row.status.includes('Pendente')) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">${row.status}</span>`;
+                }
+
+                // Pendencia Badge
+                let pendBadge = row.pendencias === 'PENDENTE' || row.pc === 'PENDENTE'
+                    ? `<span class="bg-rose-100 text-rose-800 font-extrabold px-2 py-0.5 rounded text-[10px] inline-block">PENDENTE</span>`
+                    : `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px] inline-block">OK</span>`;
+
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-slate-900">${row.os}</td>
+                    <td class="p-2.5 font-semibold text-slate-600">${row.pc}</td>
+                    <td class="p-2.5 font-bold text-slate-800">${row.fornecedor}</td>
+                    <td class="p-2.5 text-slate-600">${row.ddd}</td>
+                    <td class="p-2.5 font-mono text-[11px] text-sky-700 font-bold">${row.site}</td>
+                    <td class="p-2.5 text-slate-600">${row.central}</td>
+                    <td class="p-2.5">${statusBadge}</td>
+                    <td class="p-2.5 font-semibold text-slate-600">${row.fase}</td>
+                    <td class="p-2.5 font-medium">${row.servico}</td>
+                    <td class="p-2.5 text-slate-600 font-mono text-[11px]">${row.dataServico}</td>
+                    <td class="p-2.5 font-mono text-[11px] text-slate-500">${row.osModulo}</td>
+                    <td class="p-2.5 text-center">${pendBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // UPDATE KPI CARDS REALTIME
+        function updateKPIs(data) {
+            const total = data.length;
+            const executadas = data.filter(d => d.servico === 'Concluido' || d.status === 'Faturado' || d.status.includes('Faturamento')).length;
+            const programadas = data.filter(d => d.servico === 'Programação').length;
+            const pendentes = total - executadas - programadas;
+
+            document.getElementById('kpiTotal').textContent = total;
+            document.getElementById('kpiExecutadas').textContent = executadas;
+            document.getElementById('kpiProgramadas').textContent = programadas;
+            document.getElementById('kpiPendentes').textContent = pendentes < 0 ? 0 : pendentes;
+
+            const execPct = total > 0 ? ((executadas / total) * 100).toFixed(1) : '0.0';
+            const progPct = total > 0 ? ((programadas / total) * 100).toFixed(1) : '0.0';
+            const pendPct = total > 0 ? ((pendentes / total) * 100).toFixed(1) : '0.0';
+
+            document.getElementById('badgeExecutadas').textContent = `${execPct}% do total`;
+            document.getElementById('badgeProgramadas').textContent = `${progPct}% do total`;
+            document.getElementById('badgePendentes').textContent = `${pendPct}% do total`;
+        }
+
+        // CLEAR ALL FILTERS
+        function clearFilters() {
+            document.getElementById('filterFornecedor').value = '';
+            document.getElementById('filterDDD').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterFase').value = '';
+            document.getElementById('filterPendencia').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        // INITIALIZE CHARTS
+        function initCharts() {
+            // Trend Chart
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            trendChartInstance = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: ['Executado', 'Até 31/10', 'Até 13/11', 'Até 15/12'],
+                    datasets: [
+                        {
+                            label: 'Entregas Acumuladas',
+                            data: [33, 53, 67, 76],
+                            borderColor: '#0284c7',
+                            backgroundColor: 'rgba(2, 132, 199, 0.12)',
+                            fill: true,
+                            tension: 0.3,
+                            pointBackgroundColor: '#0284c7',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        },
+                        {
+                            label: 'Novas Entregas por Marco',
+                            data: [33, 21, 14, 9],
+                            borderColor: '#10b981',
+                            backgroundColor: '#10b981',
+                            type: 'bar',
+                            borderRadius: 4,
+                            barThickness: 24
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' } } }
                     },
-                    {
-                        label: 'Até 31/10',
-                        data: [2, 4, 2, 13, 0],
-                        backgroundColor: '#38bdf8'
-                    },
-                    {
-                        label: 'Sem data / Pendente',
-                        data: [0, 1, 8, 0, 0],
-                        backgroundColor: '#78350f'
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                    y: { stacked: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-                },
-                plugins: {
-                    legend: { labels: { color: '#f8fafc' } }
                 }
-            }
-        });
+            });
 
-        // Gráfico 2: Curva de Avanço Acumulado
-        const ctxTrend = document.getElementById('trendChart').getContext('2d');
-        new Chart(ctxTrend, {
-            type: 'line',
-            data: {
-                labels: ['Executado', 'Até 31/10', 'Até 13/11', 'Até 15/12'],
-                datasets: [{
-                    label: 'USCAs Acumuladas',
-                    data: [33, 53, 67, 76],
-                    borderColor: '#0284c7',
-                    backgroundColor: 'rgba(2, 132, 199, 0.2)',
-                    fill: true,
-                    tension: 0.2,
-                    pointRadius: 6,
-                    pointBackgroundColor: '#0284c7'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' }, min: 0, max: 80 }
+            // Supplier Chart
+            const ctxSupplier = document.getElementById('supplierChart').getContext('2d');
+            supplierChartInstance = new Chart(ctxSupplier, {
+                type: 'bar',
+                data: {
+                    labels: ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'],
+                    datasets: [
+                        { label: 'Concluído', data: [10, 11, 3, 8, 1], backgroundColor: '#10b981' },
+                        { label: 'Programado', data: [5, 6, 7, 16, 0], backgroundColor: '#0284c7' },
+                        { label: 'Sem Data / Pendente', data: [0, 1, 8, 0, 0], backgroundColor: '#f97316' }
+                    ]
                 },
-                plugins: {
-                    legend: { labels: { color: '#f8fafc' } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } },
+                        y: { stacked: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { size: 10 } } }
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    window.onload = () => {
-        populateTable();
-        initCharts();
-    };
-</script>
+        // UPDATE SUPPLIER CHART BASED ON FILTERED DATA
+        function updateSupplierChart(filteredData) {
+            if (!supplierChartInstance) return;
 
+            const fornecedores = ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'];
+            const concluidos = [];
+            const programados = [];
+            const pendentes = [];
+
+            fornecedores.forEach(f => {
+                const items = filteredData.filter(d => d.fornecedor === f);
+                const conc = items.filter(d => d.servico === 'Concluido' || d.status === 'Faturado' || d.status.includes('Faturamento')).length;
+                const prog = items.filter(d => d.servico === 'Programação').length;
+                const pend = items.length - conc - prog;
+
+                concluidos.push(conc);
+                programados.push(prog);
+                pendentes.push(pend < 0 ? 0 : pend);
+            });
+
+            supplierChartInstance.data.datasets[0].data = concluidos;
+            supplierChartInstance.data.datasets[1].data = programados;
+            supplierChartInstance.data.datasets[2].data = pendentes;
+            supplierChartInstance.update();
+        }
+
+        // LIVE SYNCHRONIZATION BUTTON TRIGGER
+        function triggerSync() {
+            const icon = document.getElementById('syncIcon');
+            icon.classList.add('fa-spin');
+            
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+                const now = new Date();
+                const timeStr = now.toTimeString().split(' ')[0];
+                document.getElementById('syncTimestamp').textContent = timeStr;
+            }, 800);
+        }
+
+        // EXPORT TO CSV
+        function exportCSV() {
+            let csv = 'OS Retrofit,Pc,Fornecedor,DDD,Site,Central,Status OS,Fase,Servico,Data Servico,OS Modulo,Pendencias\n';
+            dataset.forEach(r => {
+                csv += `"${r.os}","${r.pc}","${r.fornecedor}","${r.ddd}","${r.site}","${r.central}","${r.status}","${r.fase}","${r.servico}","${r.dataServico}","${r.osModulo}","${r.pendencias}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'Base_Retrofit_USCAs_SPI.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // PRINT REPORT / PDF
+        function printReport() {
+            window.print();
+        }
+
+        // ON LOAD INITIALIZATION
+        window.onload = function () {
+            populateDropdowns();
+            initCharts();
+            applyFilters();
+        };
+    </script>
 </body>
 </html>
