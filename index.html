@@ -61,11 +61,11 @@
         }
     </style>
 </head>
-<body class="text-slate-800 antialiased p-3 sm:p-5">
+<body class="text-slate-800 antialiased p-3 sm:p-5" onclick="closeAllDropdowns(event)">
 
     <div class="max-w-[1600px] mx-auto space-y-4">
 
-        <!-- HEADER BANNER (HL5 STANDARD) -->
+        <!-- HEADER BANNER -->
         <header class="bg-navy-900 text-white rounded-xl p-4 sm:p-5 shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border border-slate-800">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 text-2xl shrink-0 shadow-inner">
@@ -90,13 +90,13 @@
                     <span id="syncTimestamp" class="text-sm font-extrabold text-white">--:--:--</span>
                 </div>
                 
-                <button onclick="loadGoogleSheetsData()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
+                <button onclick="loadGoogleSheetsData()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95 cursor-pointer">
                     <i class="fa-solid fa-arrows-rotate" id="syncIcon"></i> Sincronizar
                 </button>
-                <button onclick="printReport()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
+                <button onclick="printReport()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95 cursor-pointer">
                     <i class="fa-solid fa-print"></i> Relatório / PDF
                 </button>
-                <button onclick="exportCSV()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95">
+                <button onclick="exportCSV()" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-2 transition shadow-sm active:scale-95 cursor-pointer">
                     <i class="fa-solid fa-file-csv"></i> Exportar Base
                 </button>
             </div>
@@ -115,10 +115,9 @@
             </div>
         </div>
 
-        <!-- KPI CARDS ROW (CORES CORRESPONDENTES NOS NÚMEROS TOTAIS) -->
+        <!-- KPI CARDS ROW -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-            
-            <!-- CARD 1: TOTAL DEMANDAS -->
+            <!-- CARD 1 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-slate-600 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">TOTAL DEMANDAS</span>
@@ -127,7 +126,7 @@
                 <div class="my-2 flex items-baseline justify-between">
                     <span id="kpiTotal" class="text-3xl font-black text-slate-900">76</span>
                     <span class="bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        100% da Base
+                        Filtradas
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-slate-500 pt-1.5 border-t border-slate-100 flex justify-between">
@@ -136,7 +135,7 @@
                 </div>
             </div>
 
-            <!-- CARD 2: EXECUTADAS / FATURADAS (VERDE) -->
+            <!-- CARD 2 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-emerald-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">EXECUTADAS / FATURADAS</span>
@@ -154,7 +153,7 @@
                 </div>
             </div>
 
-            <!-- CARD 3: PROGRAMADAS (AZUL) -->
+            <!-- CARD 3 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-sky-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-sky-600">PROGRAMADAS</span>
@@ -172,7 +171,7 @@
                 </div>
             </div>
 
-            <!-- CARD 4: PENDENTES / OUTROS (LARANJA) -->
+            <!-- CARD 4 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-amber-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-amber-600">PENDENTES / OUTROS</span>
@@ -186,11 +185,11 @@
                 </div>
                 <div class="text-xs font-semibold text-amber-600 pt-1.5 border-t border-slate-100 flex justify-between">
                     <span>Situação:</span>
-                    <span class="font-bold">Sem Data / Aprovação</span>
+                    <span class="font-bold">Sem Data / Outros</span>
                 </div>
             </div>
 
-            <!-- CARD 5: AGUARD. APROVAÇÃO (ROXO) -->
+            <!-- CARD 5 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-purple-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-purple-600">AGUARD. APROVAÇÃO</span>
@@ -207,54 +206,121 @@
                     <span class="font-bold">Aprovação Pendente</span>
                 </div>
             </div>
-
         </div>
 
-        <!-- FILTROS DE PESQUISA -->
+        <!-- FILTROS DE PESQUISA (TODOS COM MÚLTIPLA ESCOLHA) -->
         <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3 no-print">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-sky-700">
                     <i class="fa-solid fa-filter"></i>
-                    <span>FILTROS DE PESQUISA</span>
+                    <span>FILTROS DE PESQUISA (SELEÇÃO MÚLTIPLA)</span>
                 </div>
-                <button onclick="clearFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-md transition flex items-center gap-1">
+                <button onclick="clearFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-md transition flex items-center gap-1 cursor-pointer">
                     <i class="fa-solid fa-filter-circle-xmark"></i> Limpar Filtros
                 </button>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs">
-                <div>
+            <!-- GRID COM OS 6 FILTROS MÚLTIPLOS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+                
+                <!-- 1. Fornecedor -->
+                <div class="relative filter-dropdown" id="dropdown-fornecedor">
                     <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Fornecedor</label>
-                    <select id="filterFornecedor" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todos os Fornecedores</option>
-                    </select>
+                    <button type="button" onclick="toggleDropdown('fornecedor', event)" class="w-full bg-slate-50 border border-slate-200 hover:border-sky-400 rounded-lg p-2 font-medium text-slate-700 flex justify-between items-center text-xs transition cursor-pointer">
+                        <span id="btnText-fornecedor" class="truncate text-left pr-1">Todos</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] shrink-0"></i>
+                    </button>
+                    <div id="menu-fornecedor" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2.5 space-y-2">
+                        <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                            <button type="button" onclick="selectAll('fornecedor', true)" class="text-sky-600 hover:underline font-semibold">Marcar Todos</button>
+                            <button type="button" onclick="selectAll('fornecedor', false)" class="text-slate-400 hover:underline">Limpar</button>
+                        </div>
+                        <div id="options-fornecedor" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
+                    </div>
                 </div>
-                <div>
+
+                <!-- 2. DDD -->
+                <div class="relative filter-dropdown" id="dropdown-ddd">
                     <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">DDD</label>
-                    <select id="filterDDD" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todos os DDDs</option>
-                    </select>
+                    <button type="button" onclick="toggleDropdown('ddd', event)" class="w-full bg-slate-50 border border-slate-200 hover:border-sky-400 rounded-lg p-2 font-medium text-slate-700 flex justify-between items-center text-xs transition cursor-pointer">
+                        <span id="btnText-ddd" class="truncate text-left pr-1">Todos</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] shrink-0"></i>
+                    </button>
+                    <div id="menu-ddd" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2.5 space-y-2">
+                        <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                            <button type="button" onclick="selectAll('ddd', true)" class="text-sky-600 hover:underline font-semibold">Marcar Todos</button>
+                            <button type="button" onclick="selectAll('ddd', false)" class="text-slate-400 hover:underline">Limpar</button>
+                        </div>
+                        <div id="options-ddd" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
+                    </div>
                 </div>
-                <div>
+
+                <!-- 3. Status OS -->
+                <div class="relative filter-dropdown" id="dropdown-status">
                     <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Status OS</label>
-                    <select id="filterStatus" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todos os Status</option>
-                    </select>
+                    <button type="button" onclick="toggleDropdown('status', event)" class="w-full bg-slate-50 border border-slate-200 hover:border-sky-400 rounded-lg p-2 font-medium text-slate-700 flex justify-between items-center text-xs transition cursor-pointer">
+                        <span id="btnText-status" class="truncate text-left pr-1">Todos</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] shrink-0"></i>
+                    </button>
+                    <div id="menu-status" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2.5 space-y-2">
+                        <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                            <button type="button" onclick="selectAll('status', true)" class="text-sky-600 hover:underline font-semibold">Marcar Todos</button>
+                            <button type="button" onclick="selectAll('status', false)" class="text-slate-400 hover:underline">Limpar</button>
+                        </div>
+                        <div id="options-status" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
+                    </div>
                 </div>
-                <div>
+
+                <!-- 4. Fase -->
+                <div class="relative filter-dropdown" id="dropdown-fase">
                     <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Fase</label>
-                    <select id="filterFase" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todas as Fases</option>
-                    </select>
+                    <button type="button" onclick="toggleDropdown('fase', event)" class="w-full bg-slate-50 border border-slate-200 hover:border-sky-400 rounded-lg p-2 font-medium text-slate-700 flex justify-between items-center text-xs transition cursor-pointer">
+                        <span id="btnText-fase" class="truncate text-left pr-1">Todas</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] shrink-0"></i>
+                    </button>
+                    <div id="menu-fase" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2.5 space-y-2">
+                        <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                            <button type="button" onclick="selectAll('fase', true)" class="text-sky-600 hover:underline font-semibold">Marcar Todas</button>
+                            <button type="button" onclick="selectAll('fase', false)" class="text-slate-400 hover:underline">Limpar</button>
+                        </div>
+                        <div id="options-fase" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
+                    </div>
                 </div>
-                <div class="col-span-2 sm:col-span-1">
+
+                <!-- 5. Status Serviço (NOVO SOLICITADO: Concluído, Programação, Aguard. Aprovação) -->
+                <div class="relative filter-dropdown" id="dropdown-servico">
+                    <label class="block font-bold text-sky-700 uppercase tracking-wider text-[10px] mb-1 flex items-center gap-1">
+                        <i class="fa-solid fa-wrench"></i> Status Serviço
+                    </label>
+                    <button type="button" onclick="toggleDropdown('servico', event)" class="w-full bg-sky-50/50 border border-sky-300 hover:border-sky-500 rounded-lg p-2 font-semibold text-sky-900 flex justify-between items-center text-xs transition cursor-pointer">
+                        <span id="btnText-servico" class="truncate text-left pr-1">Todos</span>
+                        <i class="fa-solid fa-chevron-down text-sky-600 text-[10px] shrink-0"></i>
+                    </button>
+                    <div id="menu-servico" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-sky-200 rounded-lg shadow-xl p-2.5 space-y-2">
+                        <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                            <button type="button" onclick="selectAll('servico', true)" class="text-sky-600 hover:underline font-semibold">Marcar Todos</button>
+                            <button type="button" onclick="selectAll('servico', false)" class="text-slate-400 hover:underline">Limpar</button>
+                        </div>
+                        <div id="options-servico" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
+                    </div>
+                </div>
+
+                <!-- 6. Pendência -->
+                <div class="relative filter-dropdown" id="dropdown-pendencia">
                     <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Pendência</label>
-                    <select id="filterPendencia" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 font-medium text-slate-700 focus:bg-white focus:border-sky-500 outline-none transition">
-                        <option value="">Todas</option>
-                        <option value="PENDENTE">Apenas PENDENTES</option>
-                        <option value="Sim">Apenas OK (Sim)</option>
-                    </select>
+                    <button type="button" onclick="toggleDropdown('pendencia', event)" class="w-full bg-slate-50 border border-slate-200 hover:border-sky-400 rounded-lg p-2 font-medium text-slate-700 flex justify-between items-center text-xs transition cursor-pointer">
+                        <span id="btnText-pendencia" class="truncate text-left pr-1">Todas</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] shrink-0"></i>
+                    </button>
+                    <div id="menu-pendencia" class="hidden absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-2.5 space-y-2">
+                        <div class="flex justify-between items-center pb-1.5 border-b border-slate-100 text-[11px]">
+                            <button type="button" onclick="selectAll('pendencia', true)" class="text-sky-600 hover:underline font-semibold">Marcar Todas</button>
+                            <button type="button" onclick="selectAll('pendencia', false)" class="text-slate-400 hover:underline">Limpar</button>
+                        </div>
+                        <div id="options-pendencia" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
+                    </div>
                 </div>
+
             </div>
         </div>
 
@@ -322,7 +388,6 @@
 
         <!-- CHARTS SECTION -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            <!-- LEFT CHART -->
             <div class="lg:col-span-7 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">EVOLUÇÃO ACUMULADA POR MARCO DE TEMPO</h3>
@@ -333,7 +398,6 @@
                 </div>
             </div>
 
-            <!-- RIGHT CHART -->
             <div class="lg:col-span-5 bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">DISTRIBUIÇÃO DAS DEMANDAS POR FORNECEDOR</h3>
@@ -358,7 +422,7 @@
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <div class="relative w-full sm:w-64">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Buscar OS, Site, Central, Status..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs font-medium focus:bg-white focus:border-sky-500 outline-none transition">
+                        <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Buscar OS, Site, Central..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs font-medium focus:bg-white focus:border-sky-500 outline-none transition">
                     </div>
                     <span id="rowCount" class="bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0">
                         0 registros
@@ -378,7 +442,7 @@
                             <th class="p-2.5 border-b border-slate-700">Central</th>
                             <th class="p-2.5 border-b border-slate-700">Status OS</th>
                             <th class="p-2.5 border-b border-slate-700">Fase</th>
-                            <th class="p-2.5 border-b border-slate-700">Serviço</th>
+                            <th class="p-2.5 border-b border-slate-700">Status Serviço</th>
                             <th class="p-2.5 border-b border-slate-700">Data Serviço</th>
                             <th class="p-2.5 border-b border-slate-700">OS Módulo/Sensor</th>
                             <th class="p-2.5 border-b border-slate-700 text-center">Pendência</th>
@@ -393,13 +457,51 @@
 
     </div>
 
-    <!-- SCRIPT DE SINCRONIZAÇÃO E LÓGICA COMPLETA -->
+    <!-- SCRIPT DE SINCRONIZAÇÃO E LÓGICA DE MÚLTIPLA ESCOLHA -->
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQw6N6CcmNbYYL3A3DqYK4obljiAeoC0DYe9XKlIbLJ1zm_6owe-XCvLXGWxpWUOA/pub?gid=1856434919&single=true&output=csv";
 
         let dataset = [];
         let trendChartInstance = null;
         let supplierChartInstance = null;
+
+        // Armazenamento das seleções de múltiplos valores
+        const selectedFilters = {
+            fornecedor: new Set(),
+            ddd: new Set(),
+            status: new Set(),
+            fase: new Set(),
+            servico: new Set(),
+            pendencia: new Set()
+        };
+
+        // Opções disponíveis em cada filtro
+        const filterOptions = {
+            fornecedor: [],
+            ddd: [],
+            status: [],
+            fase: [],
+            servico: [],
+            pendencia: ['PENDENTE', 'OK']
+        };
+
+        function normalizeServico(val, status, dataServ) {
+            const raw = (val || '').trim();
+            const lower = raw.toLowerCase();
+            const sLower = (status || '').toLowerCase();
+            const dLower = (dataServ || '').toLowerCase();
+
+            if (lower.includes('concl') || sLower.includes('concl') || sLower.includes('fatur')) {
+                return 'Concluído';
+            }
+            if (lower.includes('prog') || sLower.includes('prog') || (dataServ && dataServ.includes('/'))) {
+                return 'Programação';
+            }
+            if (lower.includes('aprov') || sLower.includes('aprov') || dLower.includes('aprov')) {
+                return 'Aguard. Aprovação';
+            }
+            return raw || 'Não Definido';
+        }
 
         function loadGoogleSheetsData() {
             const icon = document.getElementById('syncIcon');
@@ -413,22 +515,30 @@
                 complete: function(results) {
                     if (icon) icon.classList.remove('fa-spin');
                     if (results.data && results.data.length > 1) {
-                        dataset = results.data.slice(1).map(row => ({
-                            os: row[0] || '',
-                            pc: row[1] || '',
-                            fornecedor: row[2] || '',
-                            ddd: row[5] || '',
-                            site: row[6] || '',
-                            central: row[7] || '',
-                            status: row[8] || '',
-                            fase: row[9] || '',
-                            servico: row[11] || '',
-                            dataServico: row[12] || '',
-                            osModulo: row[13] || '',
-                            pendencias: row[23] || row[1] || ''
-                        }));
+                        dataset = results.data.slice(1).map(row => {
+                            const rawStatus = row[8] || '';
+                            const rawServico = row[11] || '';
+                            const rawDataServico = row[12] || '';
+                            const servicoNormalizado = normalizeServico(rawServico, rawStatus, rawDataServico);
 
-                        populateDropdowns();
+                            return {
+                                os: row[0] || '',
+                                pc: row[1] || '',
+                                fornecedor: (row[2] || '').trim(),
+                                ddd: (row[5] || '').trim(),
+                                site: row[6] || '',
+                                central: row[7] || '',
+                                status: (rawStatus).trim(),
+                                fase: (row[9] || '').trim(),
+                                servico: rawServico,
+                                statusServico: servicoNormalizado,
+                                dataServico: rawDataServico,
+                                osModulo: row[13] || '',
+                                pendencias: row[23] || row[1] || ''
+                            };
+                        });
+
+                        setupMultiSelectFilters();
                         initCharts();
                         applyFilters();
 
@@ -445,52 +555,133 @@
             });
         }
 
-        function populateDropdowns() {
-            const fornecedores = [...new Set(dataset.map(d => d.fornecedor))].filter(Boolean).sort();
-            const ddds = [...new Set(dataset.map(d => d.ddd))].filter(Boolean).sort();
-            const statusList = [...new Set(dataset.map(d => d.status))].filter(Boolean).sort();
-            const fases = [...new Set(dataset.map(d => d.fase))].filter(Boolean).sort();
+        function setupMultiSelectFilters() {
+            filterOptions.fornecedor = [...new Set(dataset.map(d => d.fornecedor))].filter(Boolean).sort();
+            filterOptions.ddd = [...new Set(dataset.map(d => d.ddd))].filter(Boolean).sort();
+            filterOptions.status = [...new Set(dataset.map(d => d.status))].filter(Boolean).sort();
+            filterOptions.fase = [...new Set(dataset.map(d => d.fase))].filter(Boolean).sort();
 
-            const selForn = document.getElementById('filterFornecedor');
-            selForn.innerHTML = '<option value="">Todos os Fornecedores</option>';
-            fornecedores.forEach(f => selForn.add(new Option(f, f)));
+            // Status de Serviço: Garante os 3 principais solicitados + qualquer outro mapeado
+            const baseServicos = ['Concluído', 'Programação', 'Aguard. Aprovação'];
+            const outrosServicos = [...new Set(dataset.map(d => d.statusServico))].filter(Boolean);
+            filterOptions.servico = [...new Set([...baseServicos, ...outrosServicos])].sort();
 
-            const selDDD = document.getElementById('filterDDD');
-            selDDD.innerHTML = '<option value="">Todos os DDDs</option>';
-            ddds.forEach(d => selDDD.add(new Option(d, d)));
+            filterOptions.pendencia = ['PENDENTE', 'OK'];
 
-            const selStatus = document.getElementById('filterStatus');
-            selStatus.innerHTML = '<option value="">Todos os Status</option>';
-            statusList.forEach(s => selStatus.add(new Option(s, s)));
+            // Constrói o HTML dos checkboxes para cada grupo
+            Object.keys(filterOptions).forEach(key => {
+                const container = document.getElementById(`options-${key}`);
+                if (!container) return;
+                container.innerHTML = '';
 
-            const selFase = document.getElementById('filterFase');
-            selFase.innerHTML = '<option value="">Todas as Fases</option>';
-            fases.forEach(fa => selFase.add(new Option(fa, fa)));
+                // Inicialmente, nada está restrito (todos ativos)
+                selectedFilters[key].clear();
+
+                filterOptions[key].forEach(val => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer text-slate-700 text-xs select-none';
+                    label.innerHTML = `
+                        <input type="checkbox" value="${val}" onchange="handleCheckboxChange('${key}', this)" class="rounded text-sky-600 focus:ring-sky-500 w-3.5 h-3.5">
+                        <span class="truncate">${val}</span>
+                    `;
+                    container.appendChild(label);
+                });
+
+                updateButtonLabel(key);
+            });
+        }
+
+        function toggleDropdown(key, event) {
+            if (event) event.stopPropagation();
+            const targetMenu = document.getElementById(`menu-${key}`);
+            const isHidden = targetMenu.classList.contains('hidden');
+            
+            // Fecha todos antes de abrir o clicado
+            document.querySelectorAll('[id^="menu-"]').forEach(menu => menu.classList.add('hidden'));
+
+            if (isHidden) {
+                targetMenu.classList.remove('hidden');
+            }
+        }
+
+        function closeAllDropdowns(event) {
+            if (!event.target.closest('.filter-dropdown')) {
+                document.querySelectorAll('[id^="menu-"]').forEach(menu => menu.classList.add('hidden'));
+            }
+        }
+
+        function handleCheckboxChange(key, checkbox) {
+            if (checkbox.checked) {
+                selectedFilters[key].add(checkbox.value);
+            } else {
+                selectedFilters[key].delete(checkbox.value);
+            }
+            updateButtonLabel(key);
+            applyFilters();
+        }
+
+        function selectAll(key, shouldSelect) {
+            const container = document.getElementById(`options-${key}`);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            
+            selectedFilters[key].clear();
+            checkboxes.forEach(cb => {
+                cb.checked = shouldSelect;
+                if (shouldSelect) {
+                    selectedFilters[key].add(cb.value);
+                }
+            });
+
+            updateButtonLabel(key);
+            applyFilters();
+        }
+
+        function updateButtonLabel(key) {
+            const btnText = document.getElementById(`btnText-${key}`);
+            const count = selectedFilters[key].size;
+            const total = filterOptions[key].length;
+
+            if (count === 0 || count === total) {
+                btnText.textContent = key === 'fase' || key === 'pendencia' ? 'Todas' : 'Todos';
+                btnText.className = 'truncate text-left pr-1 text-slate-700 font-medium';
+            } else {
+                btnText.textContent = `${count} selecionado(s)`;
+                btnText.className = 'truncate text-left pr-1 text-sky-700 font-bold';
+            }
         }
 
         function applyFilters() {
-            const fornVal = document.getElementById('filterFornecedor').value;
-            const dddVal = document.getElementById('filterDDD').value;
-            const statusVal = document.getElementById('filterStatus').value;
-            const faseVal = document.getElementById('filterFase').value;
-            const pendVal = document.getElementById('filterPendencia').value;
             const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
 
             const filtered = dataset.filter(item => {
-                const matchForn = !fornVal || item.fornecedor === fornVal;
-                const matchDDD = !dddVal || item.ddd === dddVal;
-                const matchStatus = !statusVal || item.status === statusVal;
-                const matchFase = !faseVal || item.fase === faseVal;
-                const matchPend = !pendVal || item.pendencias === pendVal || (pendVal === 'PENDENTE' && item.pc === 'PENDENTE');
-                
+                // Filtros de múltipla escolha: se o Set estiver vazio, aceita todos
+                const matchForn = selectedFilters.fornecedor.size === 0 || selectedFilters.fornecedor.has(item.fornecedor);
+                const matchDDD = selectedFilters.ddd.size === 0 || selectedFilters.ddd.has(item.ddd);
+                const matchStatus = selectedFilters.status.size === 0 || selectedFilters.status.has(item.status);
+                const matchFase = selectedFilters.fase.size === 0 || selectedFilters.fase.has(item.fase);
+                const matchServico = selectedFilters.servico.size === 0 || selectedFilters.servico.has(item.statusServico);
+
+                // Pendência
+                let matchPend = true;
+                if (selectedFilters.pendencia.size > 0) {
+                    const isPendente = item.pendencias === 'PENDENTE' || item.pc === 'PENDENTE';
+                    const hasPendente = selectedFilters.pendencia.has('PENDENTE');
+                    const hasOK = selectedFilters.pendencia.has('OK');
+
+                    if (hasPendente && !hasOK) matchPend = isPendente;
+                    else if (!hasPendente && hasOK) matchPend = !isPendente;
+                }
+
+                // Busca textual
                 const matchSearch = !searchVal || 
                     item.os.toLowerCase().includes(searchVal) ||
                     item.site.toLowerCase().includes(searchVal) ||
                     item.central.toLowerCase().includes(searchVal) ||
                     item.fornecedor.toLowerCase().includes(searchVal) ||
-                    item.status.toLowerCase().includes(searchVal);
+                    item.status.toLowerCase().includes(searchVal) ||
+                    item.statusServico.toLowerCase().includes(searchVal);
 
-                return matchForn && matchDDD && matchStatus && matchFase && matchPend && matchSearch;
+                return matchForn && matchDDD && matchStatus && matchFase && matchServico && matchPend && matchSearch;
             });
 
             renderTable(filtered);
@@ -515,13 +706,14 @@
                 const tr = document.createElement('tr');
                 tr.className = idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100';
 
-                let statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${row.status}</span>`;
-                if (row.servico === 'Concluido' || row.status.includes('Faturamento') || row.status === 'Faturado') {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">${row.status}</span>`;
-                } else if (row.status.includes('Pendente')) {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">${row.status}</span>`;
-                } else if (row.servico === 'Programação') {
-                    statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">${row.status}</span>`;
+                // Badge de Status do Serviço
+                let servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${row.statusServico}</span>`;
+                if (row.statusServico === 'Concluído') {
+                    servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-check mr-1"></i>Concluído</span>`;
+                } else if (row.statusServico === 'Programação') {
+                    servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800"><i class="fa-solid fa-calendar-day mr-1"></i>Programação</span>`;
+                } else if (row.statusServico === 'Aguard. Aprovação') {
+                    servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800"><i class="fa-solid fa-hourglass-start mr-1"></i>Aguard. Aprovação</span>`;
                 }
 
                 let pendBadge = row.pendencias === 'PENDENTE' || row.pc === 'PENDENTE'
@@ -535,9 +727,9 @@
                     <td class="p-2.5 text-slate-600">${row.ddd}</td>
                     <td class="p-2.5 font-mono text-[11px] text-sky-700 font-bold">${row.site}</td>
                     <td class="p-2.5 text-slate-600">${row.central}</td>
-                    <td class="p-2.5">${statusBadge}</td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${row.status}</span></td>
                     <td class="p-2.5 font-semibold text-slate-600">${row.fase}</td>
-                    <td class="p-2.5 font-medium">${row.servico}</td>
+                    <td class="p-2.5">${servicoBadge}</td>
                     <td class="p-2.5 text-slate-600 font-mono text-[11px]">${row.dataServico}</td>
                     <td class="p-2.5 font-mono text-[11px] text-slate-500">${row.osModulo}</td>
                     <td class="p-2.5 text-center">${pendBadge}</td>
@@ -548,9 +740,9 @@
 
         function updateKPIs(data) {
             const total = data.length;
-            const executadas = data.filter(d => d.servico === 'Concluido' || d.status.includes('Faturado') || d.status.includes('Executado')).length;
-            const programadas = data.filter(d => d.servico === 'Programação' || (d.dataServico && d.dataServico.includes('/'))).length;
-            const aprovacao = data.filter(d => d.status.toLowerCase().includes('aprov') || d.pc === 'PENDENTE').length;
+            const executadas = data.filter(d => d.statusServico === 'Concluído').length;
+            const programadas = data.filter(d => d.statusServico === 'Programação').length;
+            const aprovacao = data.filter(d => d.statusServico === 'Aguard. Aprovação').length;
             const pendentes = total - executadas - programadas;
 
             document.getElementById('kpiTotal').textContent = total;
@@ -574,7 +766,7 @@
 
         function updateMarcoTable(data) {
             const total = data.length;
-            const exec = data.filter(d => d.servico === 'Concluido' || d.status.includes('Faturado') || d.status.includes('Executado')).length;
+            const exec = data.filter(d => d.statusServico === 'Concluído').length;
             const ate31 = data.filter(d => d.dataServico && d.dataServico.startsWith('10/')).length;
             const ate13 = data.filter(d => d.dataServico && d.dataServico.startsWith('11/')).length;
             const ate15 = Math.max(0, total - (exec + ate31 + ate13));
@@ -621,11 +813,11 @@
 
             suppliers.forEach(sup => {
                 const supData = data.filter(d => d.fornecedor === sup);
-                const exec = supData.filter(d => d.servico === 'Concluido' || d.status.includes('Faturado')).length;
+                const exec = supData.filter(d => d.statusServico === 'Concluído').length;
                 const ate31 = supData.filter(d => d.dataServico && d.dataServico.startsWith('10/')).length;
                 const ate13 = supData.filter(d => d.dataServico && d.dataServico.startsWith('11/')).length;
-                const aprov = supData.filter(d => d.status.toLowerCase().includes('aprov')).length;
-                const semData = supData.filter(d => !d.dataServico || d.dataServico === 'Sem Data' || d.dataServico === 'Aguard. Aprovação').length;
+                const aprov = supData.filter(d => d.statusServico === 'Aguard. Aprovação').length;
+                const semData = supData.filter(d => !d.dataServico || d.dataServico === 'Sem Data').length;
                 const total = supData.length;
 
                 totExec += exec; tot31 += ate31; tot13 += ate13;
@@ -659,11 +851,9 @@
         }
 
         function clearFilters() {
-            document.getElementById('filterFornecedor').value = '';
-            document.getElementById('filterDDD').value = '';
-            document.getElementById('filterStatus').value = '';
-            document.getElementById('filterFase').value = '';
-            document.getElementById('filterPendencia').value = '';
+            Object.keys(selectedFilters).forEach(key => {
+                selectAll(key, false);
+            });
             document.getElementById('searchInput').value = '';
             applyFilters();
         }
@@ -741,8 +931,8 @@
 
             fornecedores.forEach(f => {
                 const items = filteredData.filter(d => d.fornecedor === f);
-                const conc = items.filter(d => d.servico === 'Concluido' || d.status.includes('Faturado')).length;
-                const prog = items.filter(d => d.servico === 'Programação').length;
+                const conc = items.filter(d => d.statusServico === 'Concluído').length;
+                const prog = items.filter(d => d.statusServico === 'Programação').length;
                 const pend = items.length - conc - prog;
 
                 concluidos.push(conc);
@@ -758,9 +948,9 @@
         }
 
         function exportCSV() {
-            let csv = 'OS Retrofit,Pc,Fornecedor,DDD,Site,Central,Status OS,Fase,Servico,Data Servico,OS Modulo,Pendencias\n';
+            let csv = 'OS Retrofit,Pc,Fornecedor,DDD,Site,Central,Status OS,Fase,Status Servico,Data Servico,OS Modulo,Pendencias\n';
             dataset.forEach(r => {
-                csv += `"${r.os}","${r.pc}","${r.fornecedor}","${r.ddd}","${r.site}","${r.central}","${r.status}","${r.fase}","${r.servico}","${r.dataServico}","${r.osModulo}","${r.pendencias}"\n`;
+                csv += `"${r.os}","${r.pc}","${r.fornecedor}","${r.ddd}","${r.site}","${r.central}","${r.status}","${r.fase}","${r.statusServico}","${r.dataServico}","${r.osModulo}","${r.pendencias}"\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
