@@ -115,8 +115,8 @@
             </div>
         </div>
 
-        <!-- KPI CARDS ROW -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <!-- KPI CARDS ROW (6 CARDS INCLUINDO EM EXECUÇÃO) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <!-- CARD 1 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-slate-600 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
@@ -138,13 +138,13 @@
             <!-- CARD 2 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-emerald-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">EXECUTADAS / FATURADAS</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">EXECUTADAS</span>
                     <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
                     <span id="kpiExecutadas" class="text-3xl font-black text-emerald-600">0</span>
                     <span id="badgeExecutadas" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        0.0% do total
+                        0.0%
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-emerald-600 pt-1.5 border-t border-slate-100 flex justify-between">
@@ -153,7 +153,25 @@
                 </div>
             </div>
 
-            <!-- CARD 3 -->
+            <!-- CARD 3 (NOVO: EM EXECUÇÃO) -->
+            <div class="bg-white rounded-xl p-4 border-t-4 border-t-amber-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between bg-amber-50/20">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-700">EM EXECUÇÃO</span>
+                    <i class="fa-solid fa-person-digging text-amber-500 text-sm"></i>
+                </div>
+                <div class="my-2 flex items-baseline justify-between">
+                    <span id="kpiEmExecucao" class="text-3xl font-black text-amber-600">0</span>
+                    <span id="badgeEmExecucao" class="bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                        0.0%
+                    </span>
+                </div>
+                <div class="text-xs font-semibold text-amber-700 pt-1.5 border-t border-slate-100 flex justify-between">
+                    <span>Em Andamento:</span>
+                    <span class="font-bold">Em Campo</span>
+                </div>
+            </div>
+
+            <!-- CARD 4 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-sky-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-sky-600">PROGRAMADAS</span>
@@ -162,7 +180,7 @@
                 <div class="my-2 flex items-baseline justify-between">
                     <span id="kpiProgramadas" class="text-3xl font-black text-sky-600">0</span>
                     <span id="badgeProgramadas" class="bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        0.0% do total
+                        0.0%
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-sky-600 pt-1.5 border-t border-slate-100 flex justify-between">
@@ -171,25 +189,25 @@
                 </div>
             </div>
 
-            <!-- CARD 4 -->
-            <div class="bg-white rounded-xl p-4 border-t-4 border-t-amber-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
+            <!-- CARD 5 -->
+            <div class="bg-white rounded-xl p-4 border-t-4 border-t-orange-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold uppercase tracking-wider text-amber-600">PENDENTES / OUTROS</span>
-                    <i class="fa-solid fa-hourglass-half text-amber-500 text-sm"></i>
+                    <span class="text-xs font-bold uppercase tracking-wider text-orange-600">PENDENTES / OUTROS</span>
+                    <i class="fa-solid fa-hourglass-half text-orange-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiPendentes" class="text-3xl font-black text-amber-600">0</span>
-                    <span id="badgePendentes" class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        0.0% do total
+                    <span id="kpiPendentes" class="text-3xl font-black text-orange-600">0</span>
+                    <span id="badgePendentes" class="bg-orange-50 text-orange-700 border border-orange-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                        0.0%
                     </span>
                 </div>
-                <div class="text-xs font-semibold text-amber-600 pt-1.5 border-t border-slate-100 flex justify-between">
+                <div class="text-xs font-semibold text-orange-600 pt-1.5 border-t border-slate-100 flex justify-between">
                     <span>Situação:</span>
                     <span class="font-bold">Sem Data / Outros</span>
                 </div>
             </div>
 
-            <!-- CARD 5 -->
+            <!-- CARD 6 -->
             <div class="bg-white rounded-xl p-4 border-t-4 border-t-purple-500 border-x border-b border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <span class="text-xs font-bold uppercase tracking-wider text-purple-600">AGUARD. APROVAÇÃO</span>
@@ -198,7 +216,7 @@
                 <div class="my-2 flex items-baseline justify-between">
                     <span id="kpiAprovação" class="text-3xl font-black text-purple-600">0</span>
                     <span id="badgeAprovacao" class="bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        0.0% do total
+                        0.0%
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-purple-600 pt-1.5 border-t border-slate-100 flex justify-between">
@@ -221,7 +239,6 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
-                
                 <!-- 1. Fornecedor -->
                 <div class="relative filter-dropdown" id="dropdown-fornecedor">
                     <label class="block font-bold text-slate-500 uppercase tracking-wider text-[10px] mb-1">Fornecedor</label>
@@ -319,7 +336,6 @@
                         <div id="options-pendencia" class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"></div>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -483,31 +499,41 @@
             pendencia: ['PENDENTE', 'OK']
         };
 
-        // Função estrita: "Em Execução" somente quando a coluna L for EXATAMENTE esse termo
+        // Identificação estrita: Coluna L (Serviço) tem prioridade absoluta
         function normalizeServico(val, status, dataServ) {
             const raw = (val || '').trim();
-            // Remove acentos e converte para minúsculas para comparação segura
-            const cleanL = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const cleanL = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ');
             const sLower = (status || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             const dLower = (dataServ || '').toLowerCase();
 
-            // 1. REGRA EXCLUSIVA DA COLUNA L (Ignora o cabeçalho "servico" e qualquer status da OS)
+            // 1. PRIORIDADE ABSOLUTA: Se a coluna L for "Em Execução"
             if (cleanL === 'em execucao' || cleanL === 'em exec') {
                 return 'Em Execução';
             }
 
-            // 2. Concluído / Faturado
-            if (cleanL.includes('concl') || sLower.includes('concl') || sLower.includes('fatur') || sLower.includes('executado')) {
+            // 2. Se a coluna L for "Concluído"
+            if (cleanL.includes('concl')) {
                 return 'Concluído';
             }
 
-            // 3. Aguardando Aprovação
-            if (cleanL.includes('aprov') || sLower.includes('aprov') || dLower.includes('aprov')) {
+            // 3. Se a coluna L for "Aguard. Aprovação"
+            if (cleanL.includes('aprov')) {
                 return 'Aguard. Aprovação';
             }
 
-            // 4. Programação
-            if (cleanL.includes('prog') || sLower.includes('prog') || (dataServ && dataServ.includes('/'))) {
+            // 4. Se a coluna L for "Programação"
+            if (cleanL.includes('prog')) {
+                return 'Programação';
+            }
+
+            // Regras secundárias caso a coluna L esteja vazia:
+            if (sLower.includes('concl') || sLower.includes('fatur') || sLower.includes('executado')) {
+                return 'Concluído';
+            }
+            if (sLower.includes('aprov') || dLower.includes('aprov')) {
+                return 'Aguard. Aprovação';
+            }
+            if (sLower.includes('prog') || (dataServ && dataServ.includes('/'))) {
                 return 'Programação';
             }
 
@@ -520,7 +546,6 @@
             
             document.getElementById('statusMessage').innerHTML = '<strong>Sincronizando:</strong> Conectando à planilha do Google Sheets...';
 
-            // Parâmetro anti-cache
             const nocacheUrl = SHEET_CSV_URL + '&_t=' + new Date().getTime();
 
             Papa.parse(nocacheUrl, {
@@ -750,35 +775,40 @@
         function updateKPIs(data) {
             const total = data.length;
             const executadas = data.filter(d => d.statusServico === 'Concluído').length;
+            const emExecucao = data.filter(d => d.statusServico === 'Em Execução').length;
             const programadas = data.filter(d => d.statusServico === 'Programação').length;
             const aprovacao = data.filter(d => d.statusServico === 'Aguard. Aprovação').length;
-            const pendentes = total - executadas - programadas;
+            const pendentes = total - executadas - emExecucao - programadas - aprovacao;
 
             document.getElementById('kpiTotal').textContent = total;
             document.getElementById('kpiTotalFooter').textContent = `${total} USCAs`;
 
             document.getElementById('kpiExecutadas').textContent = executadas;
+            document.getElementById('kpiEmExecucao').textContent = emExecucao;
             document.getElementById('kpiProgramadas').textContent = programadas;
             document.getElementById('kpiPendentes').textContent = pendentes < 0 ? 0 : pendentes;
             document.getElementById('kpiAprovação').textContent = aprovacao;
 
             const execPct = total > 0 ? ((executadas / total) * 100).toFixed(1) : '0.0';
+            const emExecPct = total > 0 ? ((emExecucao / total) * 100).toFixed(1) : '0.0';
             const progPct = total > 0 ? ((programadas / total) * 100).toFixed(1) : '0.0';
             const pendPct = total > 0 ? ((pendentes / total) * 100).toFixed(1) : '0.0';
             const aprovPct = total > 0 ? ((aprovacao / total) * 100).toFixed(1) : '0.0';
 
-            document.getElementById('badgeExecutadas').textContent = `${execPct}% do total`;
-            document.getElementById('badgeProgramadas').textContent = `${progPct}% do total`;
-            document.getElementById('badgePendentes').textContent = `${pendPct}% do total`;
-            document.getElementById('badgeAprovacao').textContent = `${aprovPct}% do total`;
+            document.getElementById('badgeExecutadas').textContent = `${execPct}%`;
+            document.getElementById('badgeEmExecucao').textContent = `${emExecPct}%`;
+            document.getElementById('badgeProgramadas').textContent = `${progPct}%`;
+            document.getElementById('badgePendentes').textContent = `${pendPct}%`;
+            document.getElementById('badgeAprovacao').textContent = `${aprovPct}%`;
         }
 
         function updateMarcoTable(data) {
             const total = data.length;
             const exec = data.filter(d => d.statusServico === 'Concluído').length;
+            const emExec = data.filter(d => d.statusServico === 'Em Execução').length;
             const ate31 = data.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/10/')).length;
             const ate13 = data.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/11/')).length;
-            const ate15 = Math.max(0, total - (exec + ate31 + ate13));
+            const ate15 = Math.max(0, total - (exec + emExec + ate31 + ate13));
 
             const tbody = document.getElementById('marcoTableBody');
             tbody.innerHTML = `
@@ -789,18 +819,25 @@
                     <td class="p-2 text-emerald-600 font-bold">${total ? ((exec/total)*100).toFixed(1) : 0}%</td>
                     <td class="p-2"><span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">Realizado</span></td>
                 </tr>
+                <tr class="hover:bg-amber-50/50 bg-amber-50/30">
+                    <td class="p-2 text-left font-bold text-amber-950">Em Execução</td>
+                    <td class="p-2">${emExec}</td>
+                    <td class="p-2 font-bold text-amber-700">${exec + emExec}</td>
+                    <td class="p-2 text-amber-700 font-bold">${total ? (((exec + emExec)/total)*100).toFixed(1) : 0}%</td>
+                    <td class="p-2"><span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">Em Campo</span></td>
+                </tr>
                 <tr class="hover:bg-slate-50">
                     <td class="p-2 text-left font-bold text-slate-900">Até 31/10</td>
                     <td class="p-2">${ate31}</td>
-                    <td class="p-2 font-bold">${exec + ate31}</td>
-                    <td class="p-2 text-sky-600 font-bold">${total ? (((exec + ate31)/total)*100).toFixed(1) : 0}%</td>
+                    <td class="p-2 font-bold">${exec + emExec + ate31}</td>
+                    <td class="p-2 text-sky-600 font-bold">${total ? (((exec + emExec + ate31)/total)*100).toFixed(1) : 0}%</td>
                     <td class="p-2"><span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
                 </tr>
                 <tr class="hover:bg-purple-50/50 bg-purple-50/30">
                     <td class="p-2 text-left font-bold text-purple-950">Até 13/11</td>
                     <td class="p-2">${ate13}</td>
-                    <td class="p-2 font-black text-purple-700">${exec + ate31 + ate13}</td>
-                    <td class="p-2 text-purple-700 font-bold">${total ? (((exec + ate31 + ate13)/total)*100).toFixed(1) : 0}%</td>
+                    <td class="p-2 font-black text-purple-700">${exec + emExec + ate31 + ate13}</td>
+                    <td class="p-2 text-purple-700 font-bold">${total ? (((exec + emExec + ate31 + ate13)/total)*100).toFixed(1) : 0}%</td>
                     <td class="p-2"><span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">Programado</span></td>
                 </tr>
                 <tr class="hover:bg-slate-50">
@@ -883,11 +920,11 @@
             trendChartInstance = new Chart(ctxTrend, {
                 type: 'line',
                 data: {
-                    labels: ['Executado', 'Até 31/10', 'Até 13/11', 'Até 15/12'],
+                    labels: ['Executado', 'Em Execução', 'Até 31/10', 'Até 13/11', 'Até 15/12'],
                     datasets: [
                         {
                             label: 'Entregas Acumuladas',
-                            data: [0, 0, 0, 0],
+                            data: [0, 0, 0, 0, 0],
                             borderColor: '#0284c7',
                             backgroundColor: 'rgba(2, 132, 199, 0.12)',
                             fill: true,
@@ -945,13 +982,15 @@
 
             const total = filteredData.length;
             const exec = filteredData.filter(d => d.statusServico === 'Concluído').length;
+            const emExec = filteredData.filter(d => d.statusServico === 'Em Execução').length;
             const ate31 = filteredData.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/10/')).length;
             const ate13 = filteredData.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/11/')).length;
 
             trendChartInstance.data.datasets[0].data = [
                 exec,
-                exec + ate31,
-                exec + ate31 + ate13,
+                exec + emExec,
+                exec + emExec + ate31,
+                exec + emExec + ate31 + ate13,
                 total
             ];
             trendChartInstance.update();
