@@ -287,7 +287,7 @@
                     </div>
                 </div>
 
-                <!-- 5. Status Serviço -->
+                <!-- 5. Status Serviço (com opção Em Execução) -->
                 <div class="relative filter-dropdown" id="dropdown-servico">
                     <label class="block font-bold text-sky-700 uppercase tracking-wider text-[10px] mb-1 flex items-center gap-1">
                         <i class="fa-solid fa-wrench"></i> Status Serviço
@@ -365,6 +365,7 @@
                                 <tr class="bg-navy-900 text-white font-bold">
                                     <th class="p-2 text-left rounded-tl-md">Fornecedor</th>
                                     <th class="p-2 bg-emerald-800 text-emerald-100">Concluído</th>
+                                    <th class="p-2 bg-amber-500 text-amber-950 font-black">Em Execução</th>
                                     <th class="p-2">Até 31/10</th>
                                     <th class="p-2">Até 13/11</th>
                                     <th class="p-2">Sem Data</th>
@@ -494,6 +495,9 @@
             if (lower.includes('concl') || sLower.includes('concl') || sLower.includes('fatur')) {
                 return 'Concluído';
             }
+            if (lower.includes('em exec') || lower.includes('execução') || lower.includes('execucao') || sLower.includes('em exec') || sLower.includes('execução')) {
+                return 'Em Execução';
+            }
             if (lower.includes('prog') || sLower.includes('prog') || (dataServ && dataServ.includes('/'))) {
                 return 'Programação';
             }
@@ -561,7 +565,8 @@
             filterOptions.status = [...new Set(dataset.map(d => d.status))].filter(Boolean).sort();
             filterOptions.fase = [...new Set(dataset.map(d => d.fase))].filter(Boolean).sort();
 
-            const baseServicos = ['Concluído', 'Programação', 'Aguard. Aprovação'];
+            // Inclui explicitamente as opções principais mais as presentes nos dados
+            const baseServicos = ['Concluído', 'Em Execução', 'Programação', 'Aguard. Aprovação'];
             const outrosServicos = [...new Set(dataset.map(d => d.statusServico))].filter(Boolean);
             filterOptions.servico = [...new Set([...baseServicos, ...outrosServicos])].sort();
 
@@ -700,9 +705,12 @@
                 const tr = document.createElement('tr');
                 tr.className = idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100';
 
+                // Badges dinâmicos com a opção 'Em Execução' em destaque amarelo/âmbar
                 let servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${row.statusServico}</span>`;
                 if (row.statusServico === 'Concluído') {
                     servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-check mr-1"></i>Concluído</span>`;
+                } else if (row.statusServico === 'Em Execução') {
+                    servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300"><i class="fa-solid fa-person-digging mr-1"></i>Em Execução</span>`;
                 } else if (row.statusServico === 'Programação') {
                     servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800"><i class="fa-solid fa-calendar-day mr-1"></i>Programação</span>`;
                 } else if (row.statusServico === 'Aguard. Aprovação') {
@@ -802,26 +810,33 @@
             const tbody = document.getElementById('supplierTableBody');
             tbody.innerHTML = '';
 
-            let totExec = 0, tot31 = 0, tot13 = 0, totSemData = 0, totAprov = 0, totGeral = 0;
+            let totExec = 0, totEmExec = 0, tot31 = 0, tot13 = 0, totSemData = 0, totAprov = 0, totGeral = 0;
 
             suppliers.forEach(sup => {
                 const supData = data.filter(d => d.fornecedor === sup);
                 
                 const exec = supData.filter(d => d.statusServico === 'Concluído').length;
+                const emExec = supData.filter(d => d.statusServico === 'Em Execução').length;
                 const ate31 = supData.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/10/')).length;
                 const ate13 = supData.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/11/')).length;
                 const aprov = supData.filter(d => d.statusServico === 'Aguard. Aprovação').length;
-                const semData = supData.length - (exec + ate31 + ate13 + aprov);
+                const semData = supData.length - (exec + emExec + ate31 + ate13 + aprov);
                 const total = supData.length;
 
-                totExec += exec; tot31 += ate31; tot13 += ate13;
-                totSemData += semData; totAprov += aprov; totGeral += total;
+                totExec += exec;
+                totEmExec += emExec;
+                tot31 += ate31;
+                tot13 += ate13;
+                totSemData += semData;
+                totAprov += aprov;
+                totGeral += total;
 
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50';
                 tr.innerHTML = `
                     <td class="p-2 text-left font-bold">${sup}</td>
                     <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">${exec}</td>
+                    <td class="p-2 font-extrabold text-amber-800 bg-amber-50 border-x border-amber-200">${emExec}</td>
                     <td class="p-2">${ate31}</td>
                     <td class="p-2">${ate13}</td>
                     <td class="p-2">${semData < 0 ? 0 : semData}</td>
@@ -835,9 +850,10 @@
                 <tr class="bg-slate-100 font-bold text-slate-900 border-t border-slate-200">
                     <td class="p-2 text-left">TOTAL</td>
                     <td class="p-2 text-emerald-700">${totExec}</td>
+                    <td class="p-2 text-amber-800 bg-amber-100/70 border-x border-amber-200 font-black">${totEmExec}</td>
                     <td class="p-2">${tot31}</td>
                     <td class="p-2">${tot13}</td>
-                    <td class="p-2">${totSemData}</td>
+                    <td class="p-2 text-amber-600">${totSemData}</td>
                     <td class="p-2 text-rose-600">${totAprov}</td>
                     <td class="p-2">${totGeral}</td>
                 </tr>
@@ -888,6 +904,7 @@
                 }
             });
 
+            // Gráfico com 4 barras empilhadas: Concluído, Em Execução (Amarelo), Programado (Azul) e Sem Data (Laranja)
             const ctxSupplier = document.getElementById('supplierChart').getContext('2d');
             if (supplierChartInstance) supplierChartInstance.destroy();
 
@@ -897,6 +914,7 @@
                     labels: [],
                     datasets: [
                         { label: 'Concluído', data: [], backgroundColor: '#10b981' },
+                        { label: 'Em Execução', data: [], backgroundColor: '#f59e0b' },
                         { label: 'Programado', data: [], backgroundColor: '#0284c7' },
                         { label: 'Sem Data / Pendente', data: [], backgroundColor: '#f97316' }
                     ]
@@ -937,24 +955,28 @@
 
             const fornecedores = [...new Set(filteredData.map(d => d.fornecedor))].filter(Boolean).sort();
             const concluidos = [];
+            const emExecucao = [];
             const programados = [];
             const pendentes = [];
 
             fornecedores.forEach(f => {
                 const items = filteredData.filter(d => d.fornecedor === f);
                 const conc = items.filter(d => d.statusServico === 'Concluído').length;
+                const emExec = items.filter(d => d.statusServico === 'Em Execução').length;
                 const prog = items.filter(d => d.statusServico === 'Programação').length;
-                const pend = items.length - conc - prog;
+                const pend = items.length - conc - emExec - prog;
 
                 concluidos.push(conc);
+                emExecucao.push(emExec);
                 programados.push(prog);
                 pendentes.push(pend < 0 ? 0 : pend);
             });
 
             supplierChartInstance.data.labels = fornecedores;
             supplierChartInstance.data.datasets[0].data = concluidos;
-            supplierChartInstance.data.datasets[1].data = programados;
-            supplierChartInstance.data.datasets[2].data = pendentes;
+            supplierChartInstance.data.datasets[1].data = emExecucao;
+            supplierChartInstance.data.datasets[2].data = programados;
+            supplierChartInstance.data.datasets[3].data = pendentes;
             supplierChartInstance.update();
         }
 
