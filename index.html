@@ -208,7 +208,7 @@
             </div>
         </div>
 
-        <!-- FILTROS DE PESQUISA (TODOS COM MÚLTIPLA ESCOLHA) -->
+        <!-- FILTROS DE PESQUISA -->
         <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3 no-print">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <div class="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-sky-700">
@@ -220,7 +220,6 @@
                 </button>
             </div>
 
-            <!-- GRID COM OS 6 FILTROS MÚLTIPLOS -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
                 
                 <!-- 1. Fornecedor -->
@@ -458,7 +457,7 @@
 
     </div>
 
-    <!-- SCRIPT DE SINCRONIZAÇÃO E LÓGICA DE MÚLTIPLA ESCOLHA -->
+    <!-- SCRIPT DE SINCRONIZAÇÃO E LÓGICA -->
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQw6N6CcmNbYYL3A3DqYK4obljiAeoC0DYe9XKlIbLJ1zm_6owe-XCvLXGWxpWUOA/pub?gid=1856434919&single=true&output=csv";
 
@@ -484,29 +483,31 @@
             pendencia: ['PENDENTE', 'OK']
         };
 
+        // Função estrita: "Em Execução" somente quando a coluna L for EXATAMENTE esse termo
         function normalizeServico(val, status, dataServ) {
             const raw = (val || '').trim();
-            const lower = raw.toLowerCase();
-            const sLower = (status || '').toLowerCase();
+            // Remove acentos e converte para minúsculas para comparação segura
+            const cleanL = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const sLower = (status || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             const dLower = (dataServ || '').toLowerCase();
 
-            // 1. Prioridade estrita à Coluna L (Serviço): apenas classifica se explicitamente preenchido como Em Execução
-            if (lower.includes('em exec') || lower.includes('execução') || lower.includes('execucao')) {
+            // 1. REGRA EXCLUSIVA DA COLUNA L (Ignora o cabeçalho "servico" e qualquer status da OS)
+            if (cleanL === 'em execucao' || cleanL === 'em exec') {
                 return 'Em Execução';
             }
 
             // 2. Concluído / Faturado
-            if (lower.includes('concl') || sLower.includes('concl') || sLower.includes('fatur') || sLower.includes('executado')) {
+            if (cleanL.includes('concl') || sLower.includes('concl') || sLower.includes('fatur') || sLower.includes('executado')) {
                 return 'Concluído';
             }
 
             // 3. Aguardando Aprovação
-            if (lower.includes('aprov') || sLower.includes('aprov') || dLower.includes('aprov')) {
+            if (cleanL.includes('aprov') || sLower.includes('aprov') || dLower.includes('aprov')) {
                 return 'Aguard. Aprovação';
             }
 
             // 4. Programação
-            if (lower.includes('prog') || sLower.includes('prog') || (dataServ && dataServ.includes('/'))) {
+            if (cleanL.includes('prog') || sLower.includes('prog') || (dataServ && dataServ.includes('/'))) {
                 return 'Programação';
             }
 
@@ -519,7 +520,7 @@
             
             document.getElementById('statusMessage').innerHTML = '<strong>Sincronizando:</strong> Conectando à planilha do Google Sheets...';
 
-            // Parâmetro dinâmico para furar o cache do navegador e requisições anteriores
+            // Parâmetro anti-cache
             const nocacheUrl = SHEET_CSV_URL + '&_t=' + new Date().getTime();
 
             Papa.parse(nocacheUrl, {
