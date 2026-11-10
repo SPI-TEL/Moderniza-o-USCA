@@ -490,9 +490,8 @@
             const sLower = (status || '').toLowerCase();
             const dLower = (dataServ || '').toLowerCase();
 
-            // 1. Prioridade máxima: Em Execução
-            if (lower.includes('em exec') || lower.includes('execução') || lower.includes('execucao') || 
-                sLower.includes('em exec') || sLower === 'em execução') {
+            // 1. Prioridade estrita à Coluna L (Serviço): apenas classifica se explicitamente preenchido como Em Execução
+            if (lower.includes('em exec') || lower.includes('execução') || lower.includes('execucao')) {
                 return 'Em Execução';
             }
 
@@ -520,7 +519,10 @@
             
             document.getElementById('statusMessage').innerHTML = '<strong>Sincronizando:</strong> Conectando à planilha do Google Sheets...';
 
-            Papa.parse(SHEET_CSV_URL, {
+            // Parâmetro dinâmico para furar o cache do navegador e requisições anteriores
+            const nocacheUrl = SHEET_CSV_URL + '&_t=' + new Date().getTime();
+
+            Papa.parse(nocacheUrl, {
                 download: true,
                 skipEmptyLines: true,
                 complete: function(results) {
