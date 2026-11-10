@@ -124,14 +124,14 @@
                     <i class="fa-solid fa-circle-info text-slate-300 text-xs"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiTotal" class="text-3xl font-black text-slate-900">76</span>
+                    <span id="kpiTotal" class="text-3xl font-black text-slate-900">0</span>
                     <span class="bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
                         Filtradas
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-slate-500 pt-1.5 border-t border-slate-100 flex justify-between">
                     <span>Base Mapeada:</span>
-                    <span id="kpiTotalFooter" class="font-bold text-slate-700">76 USCAs</span>
+                    <span id="kpiTotalFooter" class="font-bold text-slate-700">0 USCAs</span>
                 </div>
             </div>
 
@@ -142,9 +142,9 @@
                     <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiExecutadas" class="text-3xl font-black text-emerald-600">33</span>
+                    <span id="kpiExecutadas" class="text-3xl font-black text-emerald-600">0</span>
                     <span id="badgeExecutadas" class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        43.4% do total
+                        0.0% do total
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-emerald-600 pt-1.5 border-t border-slate-100 flex justify-between">
@@ -160,9 +160,9 @@
                     <i class="fa-solid fa-calendar-check text-sky-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiProgramadas" class="text-3xl font-black text-sky-600">34</span>
+                    <span id="kpiProgramadas" class="text-3xl font-black text-sky-600">0</span>
                     <span id="badgeProgramadas" class="bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        44.7% do total
+                        0.0% do total
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-sky-600 pt-1.5 border-t border-slate-100 flex justify-between">
@@ -178,9 +178,9 @@
                     <i class="fa-solid fa-hourglass-half text-amber-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiPendentes" class="text-3xl font-black text-amber-600">9</span>
+                    <span id="kpiPendentes" class="text-3xl font-black text-amber-600">0</span>
                     <span id="badgePendentes" class="bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        11.8% do total
+                        0.0% do total
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-amber-600 pt-1.5 border-t border-slate-100 flex justify-between">
@@ -196,9 +196,9 @@
                     <i class="fa-solid fa-triangle-exclamation text-purple-500 text-sm"></i>
                 </div>
                 <div class="my-2 flex items-baseline justify-between">
-                    <span id="kpiAprovação" class="text-3xl font-black text-purple-600">4</span>
+                    <span id="kpiAprovação" class="text-3xl font-black text-purple-600">0</span>
                     <span id="badgeAprovacao" class="bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-bold px-2 py-0.5 rounded-md">
-                        5.3% do total
+                        0.0% do total
                     </span>
                 </div>
                 <div class="text-xs font-semibold text-purple-600 pt-1.5 border-t border-slate-100 flex justify-between">
@@ -287,7 +287,7 @@
                     </div>
                 </div>
 
-                <!-- 5. Status Serviço (NOVO SOLICITADO: Concluído, Programação, Aguard. Aprovação) -->
+                <!-- 5. Status Serviço -->
                 <div class="relative filter-dropdown" id="dropdown-servico">
                     <label class="block font-bold text-sky-700 uppercase tracking-wider text-[10px] mb-1 flex items-center gap-1">
                         <i class="fa-solid fa-wrench"></i> Status Serviço
@@ -561,20 +561,17 @@
             filterOptions.status = [...new Set(dataset.map(d => d.status))].filter(Boolean).sort();
             filterOptions.fase = [...new Set(dataset.map(d => d.fase))].filter(Boolean).sort();
 
-            // Status de Serviço: Garante os 3 principais solicitados + qualquer outro mapeado
             const baseServicos = ['Concluído', 'Programação', 'Aguard. Aprovação'];
             const outrosServicos = [...new Set(dataset.map(d => d.statusServico))].filter(Boolean);
             filterOptions.servico = [...new Set([...baseServicos, ...outrosServicos])].sort();
 
             filterOptions.pendencia = ['PENDENTE', 'OK'];
 
-            // Constrói o HTML dos checkboxes para cada grupo
             Object.keys(filterOptions).forEach(key => {
                 const container = document.getElementById(`options-${key}`);
                 if (!container) return;
                 container.innerHTML = '';
 
-                // Inicialmente, nada está restrito (todos ativos)
                 selectedFilters[key].clear();
 
                 filterOptions[key].forEach(val => {
@@ -596,7 +593,6 @@
             const targetMenu = document.getElementById(`menu-${key}`);
             const isHidden = targetMenu.classList.contains('hidden');
             
-            // Fecha todos antes de abrir o clicado
             document.querySelectorAll('[id^="menu-"]').forEach(menu => menu.classList.add('hidden'));
 
             if (isHidden) {
@@ -654,14 +650,12 @@
             const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
 
             const filtered = dataset.filter(item => {
-                // Filtros de múltipla escolha: se o Set estiver vazio, aceita todos
                 const matchForn = selectedFilters.fornecedor.size === 0 || selectedFilters.fornecedor.has(item.fornecedor);
                 const matchDDD = selectedFilters.ddd.size === 0 || selectedFilters.ddd.has(item.ddd);
                 const matchStatus = selectedFilters.status.size === 0 || selectedFilters.status.has(item.status);
                 const matchFase = selectedFilters.fase.size === 0 || selectedFilters.fase.has(item.fase);
                 const matchServico = selectedFilters.servico.size === 0 || selectedFilters.servico.has(item.statusServico);
 
-                // Pendência
                 let matchPend = true;
                 if (selectedFilters.pendencia.size > 0) {
                     const isPendente = item.pendencias === 'PENDENTE' || item.pc === 'PENDENTE';
@@ -672,7 +666,6 @@
                     else if (!hasPendente && hasOK) matchPend = !isPendente;
                 }
 
-                // Busca textual
                 const matchSearch = !searchVal || 
                     item.os.toLowerCase().includes(searchVal) ||
                     item.site.toLowerCase().includes(searchVal) ||
@@ -688,6 +681,7 @@
             updateKPIs(filtered);
             updateMarcoTable(filtered);
             updateSupplierTable(filtered);
+            updateTrendChart(filtered);
             updateSupplierChart(filtered);
         }
 
@@ -706,7 +700,6 @@
                 const tr = document.createElement('tr');
                 tr.className = idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100';
 
-                // Badge de Status do Serviço
                 let servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${row.statusServico}</span>`;
                 if (row.statusServico === 'Concluído') {
                     servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-check mr-1"></i>Concluído</span>`;
@@ -767,8 +760,8 @@
         function updateMarcoTable(data) {
             const total = data.length;
             const exec = data.filter(d => d.statusServico === 'Concluído').length;
-            const ate31 = data.filter(d => d.dataServico && d.dataServico.startsWith('10/')).length;
-            const ate13 = data.filter(d => d.dataServico && d.dataServico.startsWith('11/')).length;
+            const ate31 = data.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/10/')).length;
+            const ate13 = data.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/11/')).length;
             const ate15 = Math.max(0, total - (exec + ate31 + ate13));
 
             const tbody = document.getElementById('marcoTableBody');
@@ -813,11 +806,12 @@
 
             suppliers.forEach(sup => {
                 const supData = data.filter(d => d.fornecedor === sup);
+                
                 const exec = supData.filter(d => d.statusServico === 'Concluído').length;
-                const ate31 = supData.filter(d => d.dataServico && d.dataServico.startsWith('10/')).length;
-                const ate13 = supData.filter(d => d.dataServico && d.dataServico.startsWith('11/')).length;
+                const ate31 = supData.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/10/')).length;
+                const ate13 = supData.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/11/')).length;
                 const aprov = supData.filter(d => d.statusServico === 'Aguard. Aprovação').length;
-                const semData = supData.filter(d => !d.dataServico || d.dataServico === 'Sem Data').length;
+                const semData = supData.length - (exec + ate31 + ate13 + aprov);
                 const total = supData.length;
 
                 totExec += exec; tot31 += ate31; tot13 += ate13;
@@ -830,7 +824,7 @@
                     <td class="p-2 font-extrabold text-emerald-700 bg-emerald-50">${exec}</td>
                     <td class="p-2">${ate31}</td>
                     <td class="p-2">${ate13}</td>
-                    <td class="p-2">${semData}</td>
+                    <td class="p-2">${semData < 0 ? 0 : semData}</td>
                     <td class="p-2 font-bold text-rose-600 bg-rose-50">${aprov}</td>
                     <td class="p-2 font-bold">${total}</td>
                 `;
@@ -843,7 +837,7 @@
                     <td class="p-2 text-emerald-700">${totExec}</td>
                     <td class="p-2">${tot31}</td>
                     <td class="p-2">${tot13}</td>
-                    <td class="p-2 text-amber-600">${totSemData}</td>
+                    <td class="p-2">${totSemData}</td>
                     <td class="p-2 text-rose-600">${totAprov}</td>
                     <td class="p-2">${totGeral}</td>
                 </tr>
@@ -869,7 +863,7 @@
                     datasets: [
                         {
                             label: 'Entregas Acumuladas',
-                            data: [33, 53, 67, 76],
+                            data: [0, 0, 0, 0],
                             borderColor: '#0284c7',
                             backgroundColor: 'rgba(2, 132, 199, 0.12)',
                             fill: true,
@@ -900,11 +894,11 @@
             supplierChartInstance = new Chart(ctxSupplier, {
                 type: 'bar',
                 data: {
-                    labels: ['AC TECH', 'CICLO', 'ENERG', 'KILOWATTS', 'SISTEL'],
+                    labels: [],
                     datasets: [
-                        { label: 'Concluído', data: [0, 0, 0, 0, 0], backgroundColor: '#10b981' },
-                        { label: 'Programado', data: [0, 0, 0, 0, 0], backgroundColor: '#0284c7' },
-                        { label: 'Sem Data / Pendente', data: [0, 0, 0, 0, 0], backgroundColor: '#f97316' }
+                        { label: 'Concluído', data: [], backgroundColor: '#10b981' },
+                        { label: 'Programado', data: [], backgroundColor: '#0284c7' },
+                        { label: 'Sem Data / Pendente', data: [], backgroundColor: '#f97316' }
                     ]
                 },
                 options: {
@@ -919,6 +913,23 @@
                     }
                 }
             });
+        }
+
+        function updateTrendChart(filteredData) {
+            if (!trendChartInstance) return;
+
+            const total = filteredData.length;
+            const exec = filteredData.filter(d => d.statusServico === 'Concluído').length;
+            const ate31 = filteredData.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/10/')).length;
+            const ate13 = filteredData.filter(d => d.statusServico === 'Programação' && d.dataServico && d.dataServico.includes('/11/')).length;
+
+            trendChartInstance.data.datasets[0].data = [
+                exec,
+                exec + ate31,
+                exec + ate31 + ate13,
+                total
+            ];
+            trendChartInstance.update();
         }
 
         function updateSupplierChart(filteredData) {
