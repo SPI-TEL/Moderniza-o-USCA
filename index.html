@@ -287,7 +287,7 @@
                     </div>
                 </div>
 
-                <!-- 5. Status Serviço (com opção Em Execução) -->
+                <!-- 5. Status Serviço -->
                 <div class="relative filter-dropdown" id="dropdown-servico">
                     <label class="block font-bold text-sky-700 uppercase tracking-wider text-[10px] mb-1 flex items-center gap-1">
                         <i class="fa-solid fa-wrench"></i> Status Serviço
@@ -466,7 +466,6 @@
         let trendChartInstance = null;
         let supplierChartInstance = null;
 
-        // Armazenamento das seleções de múltiplos valores
         const selectedFilters = {
             fornecedor: new Set(),
             ddd: new Set(),
@@ -476,7 +475,6 @@
             pendencia: new Set()
         };
 
-        // Opções disponíveis em cada filtro
         const filterOptions = {
             fornecedor: [],
             ddd: [],
@@ -492,18 +490,27 @@
             const sLower = (status || '').toLowerCase();
             const dLower = (dataServ || '').toLowerCase();
 
-            if (lower.includes('concl') || sLower.includes('concl') || sLower.includes('fatur')) {
-                return 'Concluído';
-            }
-            if (lower.includes('em exec') || lower.includes('execução') || lower.includes('execucao') || sLower.includes('em exec') || sLower.includes('execução')) {
+            // 1. Prioridade máxima: Em Execução
+            if (lower.includes('em exec') || lower.includes('execução') || lower.includes('execucao') || 
+                sLower.includes('em exec') || sLower === 'em execução') {
                 return 'Em Execução';
             }
-            if (lower.includes('prog') || sLower.includes('prog') || (dataServ && dataServ.includes('/'))) {
-                return 'Programação';
+
+            // 2. Concluído / Faturado
+            if (lower.includes('concl') || sLower.includes('concl') || sLower.includes('fatur') || sLower.includes('executado')) {
+                return 'Concluído';
             }
+
+            // 3. Aguardando Aprovação
             if (lower.includes('aprov') || sLower.includes('aprov') || dLower.includes('aprov')) {
                 return 'Aguard. Aprovação';
             }
+
+            // 4. Programação
+            if (lower.includes('prog') || sLower.includes('prog') || (dataServ && dataServ.includes('/'))) {
+                return 'Programação';
+            }
+
             return raw || 'Não Definido';
         }
 
@@ -565,7 +572,6 @@
             filterOptions.status = [...new Set(dataset.map(d => d.status))].filter(Boolean).sort();
             filterOptions.fase = [...new Set(dataset.map(d => d.fase))].filter(Boolean).sort();
 
-            // Inclui explicitamente as opções principais mais as presentes nos dados
             const baseServicos = ['Concluído', 'Em Execução', 'Programação', 'Aguard. Aprovação'];
             const outrosServicos = [...new Set(dataset.map(d => d.statusServico))].filter(Boolean);
             filterOptions.servico = [...new Set([...baseServicos, ...outrosServicos])].sort();
@@ -705,7 +711,6 @@
                 const tr = document.createElement('tr');
                 tr.className = idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100';
 
-                // Badges dinâmicos com a opção 'Em Execução' em destaque amarelo/âmbar
                 let servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${row.statusServico}</span>`;
                 if (row.statusServico === 'Concluído') {
                     servicoBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-check mr-1"></i>Concluído</span>`;
@@ -904,7 +909,6 @@
                 }
             });
 
-            // Gráfico com 4 barras empilhadas: Concluído, Em Execução (Amarelo), Programado (Azul) e Sem Data (Laranja)
             const ctxSupplier = document.getElementById('supplierChart').getContext('2d');
             if (supplierChartInstance) supplierChartInstance.destroy();
 
