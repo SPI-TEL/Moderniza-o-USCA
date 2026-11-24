@@ -425,7 +425,7 @@
             </div>
         </div>
 
-        <!-- DETAILED DATA TABLE -->
+        <!-- DETAILED DATA TABLE (SEM BARRA DE ROLAGEM VERTICAL, EXIBINDO ATÉ 20 LINHAS) -->
         <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
                 <div>
@@ -433,7 +433,7 @@
                         <i class="fa-solid fa-database text-sky-600"></i>
                         <span>BASE DE DADOS DETALHADA DAS OSs</span>
                     </h3>
-                    <p class="text-[11px] text-slate-500">Listagem das OSs de Retrofit, Sensores e Módulos</p>
+                    <p class="text-[11px] text-slate-500">Listagem das OSs de Retrofit, Sensores e Módulos (exibição limitada a 20 linhas)</p>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <div class="relative w-full sm:w-64">
@@ -446,9 +446,9 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto custom-scrollbar max-h-[500px]">
+            <div class="overflow-x-auto custom-scrollbar">
                 <table id="dataTable" class="w-full text-xs text-left border-collapse">
-                    <thead class="sticky top-0 z-10 bg-navy-900 text-white font-bold">
+                    <thead class="bg-navy-900 text-white font-bold">
                         <tr>
                             <th class="p-2.5 border-b border-slate-700">OS Retrofit</th>
                             <th class="p-2.5 border-b border-slate-700">Pc</th>
@@ -728,14 +728,21 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
-            document.getElementById('rowCount').textContent = `${data.length} registros`;
+            // Limita apenas a exibição na tabela detalhada a 20 linhas
+            const visibleData = data.slice(0, 20);
 
-            if (data.length === 0) {
+            if (data.length > 20) {
+                document.getElementById('rowCount').textContent = `Exibindo 20 de ${data.length}`;
+            } else {
+                document.getElementById('rowCount').textContent = `${data.length} registros`;
+            }
+
+            if (visibleData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400 font-medium">Nenhuma demanda encontrada para os filtros selecionados.</td></tr>`;
                 return;
             }
 
-            data.forEach((row, idx) => {
+            visibleData.forEach((row, idx) => {
                 const tr = document.createElement('tr');
                 tr.className = idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-100';
 
